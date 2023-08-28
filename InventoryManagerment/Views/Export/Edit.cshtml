@@ -1,0 +1,490 @@
+﻿@model InventoryManagerment.Models.EF.ExportForm
+@{
+    //Export Edit
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var listProduct = (List<InventoryManagerment.Models.EF.Product>)ViewBag.Product;
+    var listUnit = (List<InventoryManagerment.Models.EF.Unit>)ViewBag.Unit;
+    var listCustomer = (List<InventoryManagerment.Models.EF.Customer>)ViewBag.Customer;
+    var db = new InventoryManagerment.Models.EF.InventoryDbContext();
+    var userName = Request.Cookies[InventoryManagerment.Common.CommonConstants.USER_DATA];
+    var user = new DataAccess().GetUser(userName[InventoryManagerment.Common.CommonConstants.USER_NAME]);
+    string GetProductName(string code)
+    {
+        var product = db.Products.Where(x => x.Code == code).FirstOrDefault();
+        return db.ProductCategories.Find(product.CategoryID).Name + " | " + product.Name + " | " + db.Packages.Find(product.PackageID).Name;
+    }
+    string GetUnitName(long id)
+    {
+        if (id == 0)
+        {
+            return "Chưa set đơn vị tính";
+        }
+        else
+        {
+            var product = db.Units.Find(id);
+            return product.Name;
+        }
+    }
+}
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-normal" id="exampleModalLabel"><i title="tooltip" id="btnShowInfo" class="material-icons opacity-10">person</i>Thông tin khách hàng</h5>
+                <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="modalBody" class="modal-body">
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h6>@TempData[InventoryManagerment.Common.CommonConstants.PAGE_NAME]</h6>
+    <div class="input-group input-group-static my-3">
+        <label>Ngày nhập</label>
+        <input type="datetime-local" id="txtTime" name="txtTime" class="form-control" />
+    </div>
+    <div class="input-group input-group-static my-3 is-filled">
+        <div class="col-12">
+            <label>Khách hàng</label>
+            <div class="col">
+                <input id="txtCustomerName" type="text" class="form-control" placeholder="Nhập tên khách hàng" value="@db.Customers.Where(x=>x.CustomerCode == Model.Export.CustomerCode).FirstOrDefault().Name" />
+            </div>
+            <div class="col-auto">
+                <span onclick="showInfo()" style="cursor:pointer;" class="input-group-text" id="basic-addon2"><a href="javascript:;" data-bs-toggle="modal" data-bs-target="#exampleModal"><i title="tooltip" id="btnShowInfo" class="material-icons opacity-10">infor</i></a></span>
+            </div>
+        </div>
+    </div>
+    <div class="input-group input-group-static my-3">
+        <label>Trạng thái</label>
+        <select id="txtStatus" class="form-control">
+            <option value="null">Chọn trạng thái</option>
+            <option value="True">Đã duyệt</option>
+            <option value="False">Chưa duyệt</option>
+        </select>
+    </div>
+    <div class="input-group input-group-static my-3">
+        <label>Ghi chú</label>
+        <textarea id="txtNote" name="txtNote" class="form-control" rows="5" placeholder="Nhập ghi chú">@Model.Export.Note</textarea>
+    </div>
+</div>
+<div class="row">
+    <h6>Thêm sản phẩm</h6>
+    <div class="col-md-3">
+        <div class="input-group input-group-dynamic my-3">
+            <input class="form-control" type="text" placeholder="Nhập tên sản phẩm" id="txtProductName" />
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="input-group input-group-dynamic my-3">
+            <input class="form-control" type="text" placeholder="Giá Nhập" name="priceProduct" id="txtPrice" />
+            <span class="input-group-text" id="basic-addon2">/ VNĐ</span>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="input-group input-group-dynamic my-3">
+            <input type="number" value="" name="quantityProduct" placeholder="Số lượng" id="txtQuantity" class="form-control" />
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="input-group input-group-dynamic my-3">
+            <select disabled id="txtUnit" class="form-control">
+                <option value="0">Đơn vị tính</option>
+                @foreach (var item in listUnit)
+                {
+                    <option value="@item.ID">@item.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <input type="button" id="btnAddProduct" class="btn btn-primary" value="Thêm sản phẩm" />
+    </div>
+</div>
+<div class="row">
+    <h6>Danh sách sản phẩm</h6>
+    <div class="card-body px-0 pb-2">
+        <div class="table-responsive p-0    ">
+            <table class="table align-items-center mb-0" id="tableProductRecord">
+                <thead>
+                    <tr>
+                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tên sản phẩm</th>
+                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Giá nhập</th>
+                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Số lượng</th>
+                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Đơn vị tính</th>
+                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Thành tiền</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.exportDetails)
+                    {
+                        <tr>
+                            <td class="text-sm" id="@item.ProductCode">@GetProductName(item.ProductCode)</td>
+                            <td class="align-middle text-center text-sm">@InventoryManagerment.Common.Functions.NumberToMoney(item.Price.ToString())</td>
+                            <td class="align-middle text-center text-sm">@item.Quantity</td>
+                            <td class="align-middle text-center text-sm" id="@item.UnitID">@GetUnitName(item.UnitID)</td>
+                            <td class="align-middle text-center text-sm">@InventoryManagerment.Common.Functions.NumberToMoney(((double)item.Quantity * (double)item.Price).ToString())</td>
+                            <td><a class="editproduct" href="javascript:;" onclick="editproduct(this)"><i class="material-icons">edit</i></a><a href="javascript:;" onclick="this.closest('tr').remove()"><i class="material-icons">delete</i></a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="row col-sm-2">
+    <input type="button" id="btnSave" name="SaveData" value="Cập nhật phiếu xuất" class="btn btn-success" />
+</div>
+@section jsFooter{
+    <script>
+        let dataProduct = [];
+        let nameCodeProduct = [];
+        let dataCustomer = [];
+        let nameCustomers = [];
+        let nameProducts = [];
+        let RoleID = @user.RoleID;
+        $(document).ready(function () {
+            SetAutoComplete();
+            setTime();
+            $('#txtStatus option[value=@Model.Export.Status]').attr('selected', 'selected');
+            $("#btnSave").click(function () {
+                SaveProduct();
+            });
+            $("#btnAddProduct").click(function () {
+                AddProductRecord();
+                $('#txtProductName').focus();
+            });
+            $('#txtProductName').focusout(function () {
+                var name = $('#txtProductName').val();
+                if (name.trim().length != 0) {
+                    var product = nameCodeProduct.find(x => x.FullName == name);
+                    if (product != undefined) {
+                        var Xproduct = dataProduct.find(pd => pd.Code == product.Code);
+                        $("#txtUnit").val(Xproduct.UnitID);
+                    }
+                    else {
+                        $.confirm({
+                            title: 'Thông báo',
+                            content: 'Sản phẩm vừa nhập không tồn tại?',
+                            buttons: {
+                                confirm:
+                                {
+                                    text: 'Điều chỉnh tên sản phẩm',
+                                    action: function () {
+                                        $("#txtQuantity").val("");
+                                        $("#txtPrice").val("");
+                                        $("#txtUnit").val(0);
+                                        $("#txtProductName").focus();
+                                    }
+                                },
+                                remove: {
+                                    text: 'Xóa tên sản phẩm',
+                                    action: function () {
+                                        $("#txtProductName").val("");
+                                        $("#txtQuantity").val("");
+                                        $("#txtPrice").val("");
+                                        $("#txtUnit").val(0);
+                                        $("#txtProductName").focus();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+            $('#txtCustomerName').focusout(function () {
+                var name = $("#txtCustomerName").val();
+                if (jQuery.inArray(name.trim(), nameCustomers) != -1 && name != "") {
+                    $('#txtCustomerName').val(name.trim());
+                } else {
+                    $.confirm({
+                        title: 'Thông báo!',
+                        content: 'Vì đây là chỉnh sửa phiếu xuất nên vui lòng nhập tên khách hàng có tồn tại!',
+                        buttons: {
+                            confirm: {
+                                text: 'Đồng ý',
+                                action: function () {
+                                    $('#txtCustomerName').focus();
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        function SetAutoComplete() {
+            showSpinner();
+            dataProduct = [];
+            nameCodeProduct = [];
+            dataCustomer = [];
+            nameCustomer = [];
+            nameProducts = [];
+            $.get("/Export/SetAutoComplete/", "", function (data) {
+                dataProduct.push(...data.ListProducts)
+                dataCustomer.push(...data.ListCustomers)
+                nameCodeProduct.push(...data.NameCodeProduct)
+                nameProducts.push(...data.NameProduct)
+                nameCustomers.push(...data.NameCustomer)
+
+                AutoComplete(nameProducts, $('#txtProductName'));
+                AutoComplete(nameCustomers, $('#txtCustomerName'));
+                hideSpinner();
+            })
+        }
+        function AutoComplete(data, element) {
+            element.autocomplete({
+                source: data,
+                minLength: 0,
+            },
+                {
+                    autoFocus: true,
+                    delay: 0,
+                });
+        }
+        function AddProductRecord() {
+            if ($('#txtProductName').val().length == 0) {
+                $.alert('Vui lòng nhập sản phẩm');
+                $('#txtProductName').focus();
+                return;
+            }
+            if ($("#txtQuantity").val().length == 0 || parseInt($("#txtQuantity").val()) == 0) {
+                $.alert('Vui lòng nhập số lượng');
+                $('#txtQuantity').focus();
+                return
+            }
+            if ($("#txtUnit option:selected").val() == 'null') {
+                $.alert('Vui lòng chọn đơn vị tính');
+                $('#txtUnit').focus();
+                return;
+            }
+            var temp = 0;
+            $("#tableProductRecord tbody tr").each(function () {
+                var name = $("#txtProductName").val();
+                if ($(this).find("td:eq(0)").html() == name) {
+                    temp += 1;
+                }
+            });
+            if (temp > 0) {
+                $.alert('Sản phẩm này đã tồn tại vui lòng kiểm tra lại');
+                $('#txtProductName').focus();
+                return;
+            }
+            var name = $('#txtProductName').val();
+            var productCode = nameCodeProduct.find(x => x.FullName == name).Code
+            var product = GetProduct(productCode);
+            var price = $("#txtPrice").val();
+            var quantity = $("#txtQuantity").val();
+            var total = formatNumber((price.replace(',', '') * quantity).toString(), '.', ',');
+            var unit = $("#txtUnit option:selected").text();
+            var unitID = $("#txtUnit option:selected").val();
+            if (parseInt(product.Quantity) < parseInt(quantity) && parseInt(product.Quantity) != 0) {
+                $.confirm({
+                    title: 'Thông báo!',
+                    content: 'Sản phẩm không đủ số lượng trong kho! Sản phẩm chỉ còn ' + product.Quantity + '',
+                    buttons: {
+                        confirm: {
+                            text: 'Quay lại',
+                            action: function () {
+                                $("#txtQuantity").val(product.Quantity);
+                                $("#txtQuantity").focus;
+                            }
+                        }
+                    }
+                });
+            }
+            else if (parseInt(product.Quantity) == 0) {
+                $.confirm({
+                    title: 'Thông báo!',
+                    content: 'Sản phẩm này trong kho đã hết',
+                    buttons: {
+                        confirm: {
+                            text: 'Quay lại',
+                            action: function () {
+                                $("#txtQuantity").val(product.Quantity);
+                                $("#txtQuantity").focus;
+                            }
+                        }
+                    }
+                });
+            }
+            else {
+                var productRecord = "<tr><td class=\"text-sm\"  id=" + productCode + ">" + name + "</td>" +
+                    "<td class=\"align-middle text-center text-sm\">" + formatNumber(price.toString(), '.', ',') + "</td>" +
+                    "<td class=\"align-middle text-center text-sm\">" + quantity + "</td>" +
+                    "<td class=\"align-middle text-center text-sm\" id=" + unitID + ">" + unit + "</td>" +
+                    "<td class=\"align-middle text-center text-sm\">" + total + "</td>" +
+                    "<td><a class=\"editproduct\" href =\"javascript:;\" onclick=\"editproduct(this)\"><i class=\"material-icons\">edit</i></a>" +
+                    "<a href=\"javascript:;\" onclick=\"this.closest('tr').remove()\"><i class=\"material-icons\">delete</i></a></td>" +
+                    +"</tr>";
+                $("#tableProductRecord tbody").last().append(productRecord);
+                $("#txtPrice").val("");
+                $("#txtQuantity").val("");
+                $("#txtUnit").prop('selectedIndex', 0);
+                $("#txtProductName").val("");
+                $("#txtProductName").focus();
+            }
+        }
+        function GetProduct(code) {
+            return dataProduct.find(x => x.Code == code);
+        }
+        function formatNumber(nStr, decSeperate, groupSeperate) {
+            nStr += '';
+            x = nStr.split(decSeperate);
+            x1 = x[0];
+            x2 = x.length > 1 ? '.' + x[1] : '';
+            var rgx = /(\d+)(\d{3})/;
+            while (rgx.test(x1)) {
+                x1 = x1.replace(rgx, '$1' + groupSeperate + '$2');
+            }
+            return x1 + x2;
+        }
+        function setTime() {
+            const dateControl = document.querySelector('input[type="datetime-local"]');
+            dateControl.value = '@Model.Export.Time.ToString("yyyy-MM-ddTHH:mm")';
+        };
+        function editproduct(element) {
+            if (RoleID == 1) {
+                var product = dataProduct.find(x => x.Code == $(element).closest("tr").find("td:eq(0)").attr('id'));
+                var row = $(element).closest("tr");
+                var name = $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(5) a:eq(0)').find('i').html();
+                if (name == 'edit') {
+                    var price = $('#tableProductRecord tbody tr:eq(' + row.index() + ')').find('td:eq(1)').html();
+                    var quantity = $('#tableProductRecord tbody tr:eq(' + row.index() + ')').find('td:eq(2)').html();
+                    var inputPrice = "<input type='text' value=" + price.replace(',', '') + ">";
+                    var inputQuantity = "<input type='number' value=" + quantity + ">";
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(1)').html("");
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(2)').html("");
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(1)').append(inputPrice);
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(2)').append(inputQuantity);
+                    $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(5)').find('a:eq(0)').html('<i class="material-icons">done</i>');
+                }
+                else {
+                    var price = $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').val();
+                    var quantity = $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(2)').find('input').val();
+                    var name = $('#tableProductRecord tbody tr:eq(' + row.index() + ')').find('td:eq(0)').html();
+                    if (!$.isNumeric(price.replace(',', ''))) {
+                        $.alert("Vui lòng nhập số")
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').focus();
+                        return;
+                    }
+                    if (quantity > product.Quantity) {
+                        $.alert("Số lượng sản phẩm này chỉ còn " + product.Quantity);
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(2)').find('input').val(product.Quantity);
+                        return
+                    }
+                    var total = price.replace(',', '') * quantity;
+                    $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').remove();
+                    $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(2)').find('input').remove();
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(1)').html(formatNumber(price, '.', ','));
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(2)').html(quantity);
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(4)').html(formatNumber(total, '.', ','));
+                    $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(5)').find('a:eq(0)').html('<i class="material-icons">edit</i>');
+                }
+            }
+            else {
+                var product = dataProduct.find(x => x.Code == $(element).closest("tr").find("td:eq(0)").attr('id'));
+                var row = $(element).closest("tr");
+                var name = $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(3) a:eq(0)').find('i').html();
+                if (name == 'edit') {
+                    var quantity = $('#tableProductRecord tbody tr:eq(' + row.index() + ')').find('td:eq(1)').html();
+                    var inputQuantity = "<input type='number' value='" + quantity + "'/>";
+                    console.log(inputQuantity);
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(1)').html("");
+                    $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(1)').append(inputQuantity);
+                    $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(3)').find('a:eq(0)').html('<i class="material-icons">done</i>');
+                }
+                else {
+                    var quantity = $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').val();
+                    if (quantity.trim().length == 0 || quantity == '0') {
+                        $.alert('Vui lòng nhập số lượng sản phẩm');
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').focus();
+                        return;
+                    }
+                    if (!$.isNumeric(price.replace(',', ''))) {
+                        $.alert("Vui lòng nhập số")
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').focus();
+                        return;
+                    }
+                    if (quantity > product.Quantity) {
+                        $.alert("Số lượng sản phẩm này chỉ còn " + product.Quantity);
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(2)').find('input').val(product.Quantity);
+                        return
+                    }
+                    else {
+                        var name = $('#tableProductRecord tbody tr:eq(' + row.index() + ')').find('td:eq(0)').html();
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').remove();
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(1)').find('input').remove();
+                        $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(1)').html(quantity);
+                        $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(3)').find('a:eq(0)').html('<i class="material-icons">edit</i>');
+                    }
+                }
+            }
+        }
+        function getCustomerCode(name) {
+            var code = "";
+            dataCustomer.forEach(item => {
+                if (item.Name.trim() == name.trim()) {
+                    code = item.CustomerCode;
+                }
+            });
+            return code;
+        }
+        function SaveProduct() {
+            if ($('#txtCustomerName').val() == "") {
+                $.alert("Vui lòng nhập tên khách hàng");
+                $('#txtCustomerName').focus();
+                return;
+            }
+            if ($('#txtStatus').val() == 'null') {
+                $.alert("Vui lòng chọn trạng thái");
+                return;
+            }
+            var listProduct = new Array();
+            var table = $('#tableProductRecord tbody tr');
+            table.each(function () {
+                var Code = $(this).find("td:eq(0)").attr('id');
+                var Price = $(this).find("td:eq(1)").text();
+                var Quantity = $(this).find("td:eq(2)").text();
+                var UnitID = $(this).find("td:eq(3)").attr('id');
+                var Time = $("#txtTime").val();
+                var Note = $("#txtNote").val();
+                var NameCustomer = $("#txtCustomerName").val();
+                var CustomerCode = getCustomerCode(NameCustomer);
+                var Delivery = $('#txtDelivery').val();
+                var Status = $('#txtStatus').val();
+                var ExportCode = '@Model.Export.Code';
+                var ProductModel = {};
+                ProductModel.Code = ExportCode;
+                ProductModel.Status = Status;
+                ProductModel.NameCustomer = NameCustomer;
+                ProductModel.CustomerCode = CustomerCode;
+                ProductModel.Delivery = Delivery;
+                ProductModel.Price = Price;
+                ProductModel.Quantity = Quantity;
+                ProductModel.ProductCode = Code;
+                ProductModel.Time = Time;
+                ProductModel.Note = Note;
+                ProductModel.UnitID = UnitID;
+                listProduct.push(ProductModel);
+            });
+            if (listProduct.length == 0) {
+                $.alert('Vui lòng thêm ít nhất 1 sản phẩm');
+                return;
+            }
+            $.post('/Export/Edit/', { model: listProduct }, function () {
+                var obj = $.alert({
+                    title: 'Thông báo',
+                    content: 'Cập nhật phiếu xuất thành công',
+                });
+                setTimeout(function () {
+                    obj.close();
+                }, 1500);
+            });
+    };
+    </script>
+}

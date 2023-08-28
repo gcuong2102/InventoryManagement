@@ -1,0 +1,46 @@
+﻿@{
+    var userName = Request.Cookies[InventoryManagerment.Common.CommonConstants.USER_DATA];
+    var user = new DataAccess().GetUser(userName[InventoryManagerment.Common.CommonConstants.USER_NAME]);
+}
+<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 border-radius-xl shadow-none" id="navbarBlur" data-scroll="true">
+    <div class="container-fluid py-1 px-3">
+        <nav aria-label="breadcrumb">
+            <h6 class="font-weight-bolder mb-0">@TempData[InventoryManagerment.Common.CommonConstants.PAGE_NAME]</h6>
+        </nav>
+        <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+            <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+            </div>
+            <ul class="navbar-nav  justify-content-end">
+                <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+                    <a href="javascript:;" class="nav-link p-0 text-body" id="iconNavbarSidenav">
+                        <div class="sidenav-toggler-inner">
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item d-xl-none ps-3 d-flex align-items-center"> </li>
+                <li class="nav-item d-flex align-items-center">
+                    <div class="dropdownx">
+                        <a onclick="myFunction()" style="cursor:pointer;" class="dropdown-toggle">
+                            <i class="fa fa-user me-sm-1"></i>
+                            @user.Name
+                        </a>
+                        <div id="myDropdown" class="dropdown-contentx">
+                            @if (user.RoleID == 1)
+                            {
+                                <a class="text-sm" href="/User">Quản lý người dùng</a>
+                                <a class="text-sm" href="/Role">Quản lý chức vụ</a>
+                                <a class="text-sm" href="/History">Lịch sử hệ thống</a>
+                                <a class="text-sm" href="/History/Receipt">Lịch sử các phiếu</a>
+                                <hr class="horizontal dark my-1">
+                            }
+                            <a class="text-sm" href="/Login/Logout">Đăng xuất</a>
+                        </div>
+                    </div>                  
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

@@ -579,7 +579,7 @@ else
                                         {
                                             <div class="input-group mb-3">
                                                 <div class="input-group input-group-static mb-4">
-                                                    <input placeholder="Nhập tên sản phẩm" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="@ViewBag.searchString" name="searchString">
+                                                    <input id="txtProduct" placeholder="Nhập tên sản phẩm" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="@ViewBag.searchString" name="searchString">
                                                 </div>
                                                 <div class="input-group input-group-static mb-4">
                                                     <label for="ActionKey" class="ms-0">Loại Sản Phẩm</label>
@@ -653,7 +653,7 @@ else
     @Html.Raw(addModelBussiness())
     <script>
         $(document).ready(function () {
-                AutoComplete(dataProduct, $("#searchString"));
+                AutoComplete(dataProduct, $("#txtProduct"));
                 addClasslist();
             });
         function addClasslist() {

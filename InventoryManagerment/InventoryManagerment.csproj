@@ -453,6 +453,7 @@
     <Content Include="Assets\scss\material-dashboard\_variables.scss" />
     <None Include="Properties\PublishProfiles\IISProfile.pubxml" />
     <None Include="Scripts\jquery-1.8.0.intellisense.js" />
+    <Content Include="Images\beautiful-color-gradients-backgrounds-001-warm-flame.png" />
     <Content Include="Scripts\jquery-1.8.0.js" />
     <Content Include="Scripts\jquery-1.8.0.min.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.js" />

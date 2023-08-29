@@ -12,24 +12,6 @@
         var list = db.ExportDetails.Where(x => x.ExportCode == Code).ToList();
         return list.Count;
     }
-    string GetProductPrice(string Code)
-    {
-        var list = db.ExportDetails.Where(x => x.ExportCode == Code).ToList();
-        if (list == null)
-        {
-            return "0";
-        }
-        else
-        {
-            decimal sum = 0;
-            foreach (var item in list)
-            {
-                sum += (item.Price * item.Quantity);
-            }
-            return InventoryManagerment.Common.Functions.NumberToMoney(sum.ToString());
-        }
-
-    }
     string GetNote(string note)
     {
         if (note == " ")

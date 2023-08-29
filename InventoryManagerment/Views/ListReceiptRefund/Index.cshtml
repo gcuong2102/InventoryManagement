@@ -12,24 +12,6 @@
         var list = db.RefundDetails.Where(x => x.RefundCode == Code).ToList();
         return list.Count;
     }
-    string GetProductPrice(string Code)
-    {
-        var list = db.RefundDetails.Where(x => x.RefundCode == Code).ToList();
-        if (list == null)
-        {
-            return "0";
-        }
-        else
-        {
-            decimal sum = 0;
-            foreach (var item in list)
-            {
-                sum += (item.Price * item.Quantity);
-            }
-            return InventoryManagerment.Common.Functions.NumberToMoney(sum.ToString());
-        }
-
-    }
     string GetNote(string note)
     {
         if (note == " " || note == null)
@@ -81,14 +63,11 @@
                         <tr>
                             <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tên sản phẩm</th>
                             <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Số lượng</th>
-                            <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Giá đơn vị</th>
-                            <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Thành tiền</th>
                         </tr>
                     </thead>
                     <tbody>
                     </tbody>
-                </table>
-                <blockquote id="totalPrice" class="blockquote text-center"><p class="h6 text-start">&nbsp;Tổng tiền: <span>...</span></p></blockquote>
+                </table>             
             </div>
         </div>
     </div>
@@ -168,7 +147,6 @@
                                 <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tên khách hàng</th>
                                 <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tên người lập</th>
                                 <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Số sản phẩm nhập</th>
-                                <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tổng tiền</th>
                                 <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Ghi chú</th>
                                 <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Trạng thái</th>
                                 <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Tùy chọn</th>
@@ -197,9 +175,6 @@
                                     </td>
                                     <td class="align-middle text-center">
                                         <h6 class="mb-0 text-sm">@GetProductQuantity(item.Code) <a id="@item.Code" onclick="showDetail(this)" class="btn btn-link text-dark px-3 mb-0" href="javascript:;" data-bs-toggle="modal" data-bs-target="#refundDetail"><i class="material-icons text-sm me-2">visibility</i>XEM</a></h6>
-                                    </td>
-                                    <td class="align-middle text-center">
-                                        <h6 class="mb-0 text-sm">@GetProductPrice(item.Code)</h6>
                                     </td>
                                     <td class="align-middle text-center">
                                         <h6 class="mb-0 text-sm">@GetNote(item.Note)</h6>
@@ -304,8 +279,6 @@
                     result.forEach(item => {
                         var htmlDetail = '<tr><td class="align-middle text-center"> <span class="text-secondary text-xs font-weight-bold">' + item.ProductName + '</span></td>"'
                             + '<td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' + item.Quantity + '' + item.UnitName + '</span></td>'
-                            + '<td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' + formatNumber(item.Price, '.', ',') + '</span></td>'
-                            + '<td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' + formatNumber((item.Price * item.Quantity), '.', ',') + '</span></td></tr>';
                         $('#tableInvoice').find('tbody').append(htmlDetail);
                     });
                     $('#refundDetail h6:eq(0)').find('p').html(result[0].Time);
@@ -317,7 +290,6 @@
                     else {
                         $('#refundDetail h6:eq(3)').find('p').html(result[0].Note);
                     }
-                    $('#totalPrice p').find('span').html(formatNumber(result[0].Total, '.', ',') + ' VNĐ');
                 }
             });
         }

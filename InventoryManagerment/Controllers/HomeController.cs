@@ -18,6 +18,8 @@ namespace InventoryManagerment.Controllers
             ViewBag.User = new DataAccess().GetUser(GetUserName());
             ViewBag.searchString = searchString;
             ViewBag.typeProduct = typeProduct;
+            ViewBag.page = page;
+            ViewBag.pageSize = pageSize;
             var model = new DataAccess().ListAllProductOnPagedlist(searchString,quantity, typeProduct, page, pageSize);
             return View(model);
         }

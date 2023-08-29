@@ -639,7 +639,7 @@ else
                         </table>
                         <div style="text-align:center;margin-top:15px;">
                             <div style="display:inline-block" id="listPagination">
-                                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString }))
+                                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString,typeProduct = ViewBag.typeProduct, pageSize = ViewBag.pageSize }))
                             </div>
                         </div>
                     </div>

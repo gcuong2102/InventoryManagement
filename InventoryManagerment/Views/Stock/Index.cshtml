@@ -299,16 +299,6 @@
             setValue();
             addClasslist();
         });
-        function AutoComplete(dataProduct, element) {
-            element.autocomplete({
-                source: dataProduct,
-                minLength: 0,
-            },
-                {
-                    autoFocus: false,
-                    delay: 0,
-                });
-        }
         function addClasslist() {
             $('#listPagination ul li').each(function () {
                 $(this).addClass('page-item');
@@ -322,7 +312,7 @@
         $('#typeProduct option[value=' + typeProduct+']').attr('selected', 'selected');
         $('#pageSize option[value=' + pageSize + ']').attr('selected', 'selected');
         $('#quantity option[value=' + quantity + ']').attr('selected', 'selected');
-        }
+    }
     </script>
 }
 

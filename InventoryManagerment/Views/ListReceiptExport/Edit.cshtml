@@ -295,16 +295,6 @@
                 AutoComplete(nameCustomers, $('#txtCustomerName'));
             })
         }
-        function AutoComplete(data, element) {
-            element.autocomplete({
-                source: data,
-                minLength: 0,
-            },
-                {
-                    autoFocus: true,
-                    delay: 0,
-                });
-        }
         function AddProductRecord() {
             if ($('#txtProductName').val().length == 0) {
                 $.alert('Vui lòng nhập sản phẩm');

@@ -231,8 +231,8 @@
                 nameProducts.push(...data.NameProduct)
                 nameCustomers.push(...data.NameCustomer)
 
-                AutoComplete(nameProducts, $('#txtProductName'));
-                AutoComplete(nameCustomers, $('#txtCustomerName'));
+                AutoCompleteForInput(nameProducts, $('#txtProductName'));
+                AutoCompleteForInput(nameCustomers, $('#txtCustomerName'));
                 hideSpinner();
             })
         }

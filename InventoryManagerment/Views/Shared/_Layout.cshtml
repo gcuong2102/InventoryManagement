@@ -102,7 +102,7 @@
             }).on('blur', function () {
                 // Auto-fill the result if there's only one match when the input loses focus
                 // and the input is not empty
-                if (lastResults.length === 2 && $(this).val().trim() !== "") {
+                if (lastResults.length <= 2 && $(this).val().trim() !== "") {
                     $(this).val(lastResults[0]);
                 }
                 lastResults = []; // Clear the stored results after auto-filling or on blur
@@ -135,7 +135,15 @@
                 return result;
             }
         }
-
+        function AutoCompleteForInput(data, element) {
+            element.autocomplete({
+                source: data,
+                minLength: 0,
+            }, {
+                autoFocus: false,
+                delay: 0,
+            });
+        }
     </script>
     <script>
         const preloaderWrapper = document.querySelector('.preloader-wrapper');

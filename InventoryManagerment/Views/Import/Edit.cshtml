@@ -876,8 +876,8 @@
                 nameProducts.push(...data.NameProduct);
                 nameSupplier.push(...data.NameSupplier);
 
-                AutoComplete(nameProducts, $('#txtProductName'));
-                AutoComplete(nameSupplier, $('#txtSupplier'));
+                AutoCompleteForInput(nameProducts, $('#txtProductName'));
+                AutoCompleteForInput(nameSupplier, $('#txtSupplier'));
                 hideSpinner();
             })
             

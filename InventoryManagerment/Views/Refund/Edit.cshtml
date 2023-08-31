@@ -312,8 +312,8 @@
                 AddNewProduct();
             });
             setValue();
-            AutoComplete(dataProduct, $('#txtProductName'));
-            AutoComplete(dataCustomer, $('#txtCustomerName'));
+            AutoCompleteForInput(dataProduct, $('#txtProductName'));
+            AutoCompleteForInput(dataCustomer, $('#txtCustomerName'));
             $('#txtCustomerName').focusout(function () {
                 var text = $('#txtCustomerName').val();
                 if (jQuery.inArray(text, dataCustomer) != -1 || text == "") {
@@ -470,16 +470,6 @@
                 $('#tableProductRecord>tbody>tr:eq(' + row.index() + ')').find('td:eq(4)').html(formatNumber(total, '.', ','));
                 $('#tableProductRecord tbody tr:eq(' + row.index() + ') td:eq(5)').find('a:eq(0)').html('<i class="material-icons">edit</i>');
             }
-        }
-        function AutoComplete(dataProduct, element) {
-            element.autocomplete({
-                source: dataProduct,
-                minLength: 0,
-            },
-                {
-                    autoFocus: true,
-                    delay: 0,
-                });
         }
         function SaveProduct() {
             if ($('#txtCustomerName').val() == "") {

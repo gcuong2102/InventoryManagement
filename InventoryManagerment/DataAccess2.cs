@@ -80,57 +80,57 @@ namespace InventoryManagerment
         {
             return db.NOTEs.Where(x => x.ID == code).FirstOrDefault().NOTE;
         }
-        public IEnumerable<BillViewModel> ListAllHoaDonToPagedList(string searchString, string nameProduct,string totalPrice,DateTime? dateBill, int page, int pageSize)
-        {
-            string date;
-            double price;
-            if (dateBill.HasValue)
-            {
-                date = dateBill.Value.ToString("'Ngày' dd 'Tháng' MM 'Năm' yyyy");
-            }
-            else
-            {
-                date = "Ngày";
-            }
-            if(!string.IsNullOrEmpty(totalPrice))
-            {
-                price = Convert.ToDouble(Functions.RemoveCharacters(totalPrice));
-            }
-            else
-            {
-                price = double.MaxValue;
-            }
-            if (!string.IsNullOrEmpty(nameProduct))
-            {
-                nameProduct = nameProduct.Trim();
-            }
-            else
-            {
-                nameProduct = ""; 
-            }
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                searchString = searchString.Trim();
-            }
-            else
-            {
-                searchString = "";
-            }
-            var ketqua = (from bill in db.HOADONBANs
-                          join detail in db.CHITIETHOADONs on bill.MAHOADON equals detail.MAHOADON
-                          where bill.TENKHACHHANG.Contains(searchString) && detail.TENSANPHAM.Contains(nameProduct) && bill.NGAYBAN.Contains(date) && bill.TONGTIEN <= price
-                          select new BillViewModel()
-                          {
-                              MAHOADON = bill.MAHOADON,
-                              TENSANPHAM = detail.TENSANPHAM,
-                              STT = bill.STT,
-                              DEPT = bill.DEPT,
-                              NGAYBAN = bill.NGAYBAN,
-                              TENKHACHHANG = bill.TENKHACHHANG,
-                              TONGTIEN = bill.TONGTIEN
-                          }).Distinct().ToList();
-            return ketqua.OrderByDescending(x=>string.Concat(x.NGAYBAN.Substring(21, 4), x.NGAYBAN.Substring(14, 2), x.NGAYBAN.Substring(5, 2), x.NGAYBAN.Substring(28, 2), x.NGAYBAN.Substring(35, 2), x.NGAYBAN.Substring(43, 2))).ToPagedList(page, pageSize);          
-        }
+        //public IEnumerable<BillViewModel> ListAllHoaDonToPagedList(string searchString, string nameProduct,string totalPrice,DateTime? dateBill, int page, int pageSize)
+        //{
+        //    string date;
+        //    double price;
+        //    if (dateBill.HasValue)
+        //    {
+        //        date = dateBill.Value.ToString("'Ngày' dd 'Tháng' MM 'Năm' yyyy");
+        //    }
+        //    else
+        //    {
+        //        date = "Ngày";
+        //    }
+        //    if(!string.IsNullOrEmpty(totalPrice))
+        //    {
+        //        price = Convert.ToDouble(Functions.RemoveCharacters(totalPrice));
+        //    }
+        //    else
+        //    {
+        //        price = double.MaxValue;
+        //    }
+        //    if (!string.IsNullOrEmpty(nameProduct))
+        //    {
+        //        nameProduct = nameProduct.Trim();
+        //    }
+        //    else
+        //    {
+        //        nameProduct = ""; 
+        //    }
+        //    if (!string.IsNullOrEmpty(searchString))
+        //    {
+        //        searchString = searchString.Trim();
+        //    }
+        //    else
+        //    {
+        //        searchString = "";
+        //    }
+        //    var ketqua = (from bill in db.HOADONBANs
+        //                  join detail in db.CHITIETHOADONs on bill.MAHOADON equals detail.MAHOADON
+        //                  where bill.TENKHACHHANG.Contains(searchString) && detail.TENSANPHAM.Contains(nameProduct) && bill.NGAYBAN.Contains(date) && bill.TONGTIEN <= price
+        //                  select new BillViewModel()
+        //                  {
+        //                      MAHOADON = bill.MAHOADON,
+        //                      TENSANPHAM = detail.TENSANPHAM,
+        //                      STT = bill.STT,
+        //                      DEPT = bill.DEPT,
+        //                      NGAYBAN = bill.NGAYBAN,
+        //                      TENKHACHHANG = bill.TENKHACHHANG,
+        //                      TONGTIEN = bill.TONGTIEN
+        //                  }).Distinct().ToList();
+        //    return ketqua.OrderByDescending(x=>string.Concat(x.NGAYBAN.Substring(21, 4), x.NGAYBAN.Substring(14, 2), x.NGAYBAN.Substring(5, 2), x.NGAYBAN.Substring(28, 2), x.NGAYBAN.Substring(35, 2), x.NGAYBAN.Substring(43, 2))).ToPagedList(page, pageSize);          
+        //}
         public List<BillModel> GetListBill(string code)
         {
             List<BillModel> listBill = new List<BillModel>();
@@ -167,5 +167,73 @@ namespace InventoryManagerment
             };
             return result;
         }
+        public IEnumerable<BillViewModel> ListAllHoaDonToPagedList(string searchString, string nameProduct, string totalPrice, DateTime? dateBill, int page, int pageSize)
+        {
+            string date = FormatDate(dateBill);
+            double price = ParsePrice(totalPrice);
+            nameProduct = CleanString(nameProduct);
+            searchString = CleanString(searchString);
+
+            var query = from bill in db.HOADONBANs
+                        join detail in db.CHITIETHOADONs on bill.MAHOADON equals detail.MAHOADON
+                        where bill.TENKHACHHANG.Contains(searchString)
+                              && detail.TENSANPHAM.Contains(nameProduct)
+                              && bill.NGAYBAN.Contains(date)
+                              && bill.TONGTIEN <= price
+                        select new
+                        {
+                            Bill = bill,
+                            Detail = detail
+                        };
+
+            var groupedQuery = from q in query
+                               group q by q.Bill.MAHOADON into grouped
+                               let firstItem = grouped.FirstOrDefault() // Use let to get the first item
+                               where firstItem != null // Ensure that the first item isn't null
+                               select new BillViewModel()
+                               {
+                                   MAHOADON = grouped.Key,
+                                   TENSANPHAM = firstItem.Detail.TENSANPHAM,
+                                   STT = firstItem.Bill.STT,
+                                   DEPT = firstItem.Bill.DEPT,
+                                   NGAYBAN = firstItem.Bill.NGAYBAN,
+                                   TENKHACHHANG = firstItem.Bill.TENKHACHHANG,
+                                   TONGTIEN = firstItem.Bill.TONGTIEN
+                               };
+
+
+            var ketqua = groupedQuery
+                         .ToList() // Thực thi truy vấn và lấy dữ liệu
+                         .OrderByDescending(x => ParseNgayBanToSortableString(x.NGAYBAN))
+                         .ToPagedList(page, pageSize);
+
+            return ketqua;
+        }
+        private string FormatDate(DateTime? dateBill)
+        {
+            return dateBill?.ToString("'Ngày' dd 'Tháng' MM 'Năm' yyyy") ?? "Ngày";
+        }
+
+        private double ParsePrice(string totalPrice)
+        {
+            return string.IsNullOrWhiteSpace(totalPrice) ? double.MaxValue : Convert.ToDouble(Functions.RemoveCharacters(totalPrice));
+        }
+
+        private string CleanString(string input)
+        {
+            return string.IsNullOrWhiteSpace(input) ? "" : input.Trim();
+        }
+
+        private string ParseNgayBanToSortableString(string ngayBan)
+        {
+            return string.Concat(
+                ngayBan.Substring(21, 4),
+                ngayBan.Substring(14, 2),
+                ngayBan.Substring(5, 2),
+                ngayBan.Substring(28, 2),
+                ngayBan.Substring(35, 2),
+                ngayBan.Substring(43, 2));
+        }
+
     }
 }

@@ -164,6 +164,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\css\bootstrap-datepicker.css" />
+    <Content Include="Assets\css\bootstrap.css" />
     <Content Include="Assets\css\material-dashboard.css" />
     <Content Include="Assets\css\material-dashboard.min.css" />
     <Content Include="Assets\css\nucleo-icons.css" />
@@ -254,9 +256,15 @@
     <Content Include="Assets\img\team-5.jpg" />
     <Content Include="Assets\img\tesla-model-s.png" />
     <Content Include="Assets\img\vr-bg.jpg" />
+    <Content Include="Assets\js\bootstrap-datepicker.js" />
+    <Content Include="Assets\js\bootstrap.js" />
     <Content Include="Assets\js\core\bootstrap.bundle.min.js" />
     <Content Include="Assets\js\core\bootstrap.min.js" />
     <Content Include="Assets\js\core\popper.min.js" />
+    <Content Include="Assets\js\jquery-1.10.2.js" />
+    <Content Include="Assets\js\jquery-confirm.js" />
+    <Content Include="Assets\js\jquery.unobtrusive-ajax.js" />
+    <Content Include="Assets\js\jquery.unobtrusive-ajax.min.js" />
     <Content Include="Assets\js\material-dashboard.js" />
     <Content Include="Assets\js\material-dashboard.min.js" />
     <Content Include="Assets\js\plugins\bootstrap-notify.js" />

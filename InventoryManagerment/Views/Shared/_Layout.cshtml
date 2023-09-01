@@ -88,13 +88,12 @@
     <script src="~/assets/js/plugins/chartjs.min.js"></script>
     <script>
         function AutoComplete(data, element) {
-            var lastResults = [];
-
             element.autocomplete({
                 source: function (request, response) {
                     var searchTerm = normalizeString(request.term);
+                    var searchTermNoAccents = normalizeString(removeAccents(request.term));
                     var results = $.grep(data, function (value) {
-                        return normalizeString(removeAccents(value)).includes(searchTerm);
+                        return normalizeString(value).includes(searchTerm) || normalizeString(removeAccents(value)).includes(searchTermNoAccents);
                     });
                     lastResults = results; // Store the results for later use
                     response(results);
@@ -102,7 +101,7 @@
             }).on('blur', function () {
                 // Auto-fill the result if there's only one match when the input loses focus
                 // and the input is not empty
-                if (lastResults.length <= 2 && $(this).val().trim() !== "") {
+                if (lastResults.length === 1 && $(this).val().trim() !== "") {
                     $(this).val(lastResults[0]);
                 }
                 lastResults = []; // Clear the stored results after auto-filling or on blur

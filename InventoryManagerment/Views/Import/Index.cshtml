@@ -124,7 +124,7 @@
                                                 <input id="txtProduct" placeholder="Nhập tên sản phẩm" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="@ViewBag.productName" name="productName">
                                             </div>
                                             <div class="input-group input-group-static mb-4">
-                                                <input id="txtUser" placeholder="Nhập tên người lập" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="@ViewBag.productName" name="productName">
+                                                <input id="txtUser" placeholder="Nhập tên người lập" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="@ViewBag.nameUser" name="nameUser">
                                             </div>
                                             <div class="input-group input-group-static mb-4">
                                                 <input type="date" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="@ViewBag.dateImport" id="dateImport" name="dateImport">
@@ -215,7 +215,7 @@
                     </table>
                     <div style="text-align:center">
                         <div id="listPagination" style="display:inline-block">
-                            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, note = ViewBag.note, productName = ViewBag.productNamem, dateImport = ViewBag.dateImport, pageSize = ViewBag.pageSize }))
+                            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString,nameUser = ViewBag.nameUser, note = ViewBag.note, productName = ViewBag.productNamem, dateImport = ViewBag.dateImport, pageSize = ViewBag.pageSize }))
                         </div>
                     </div>
                 </div>

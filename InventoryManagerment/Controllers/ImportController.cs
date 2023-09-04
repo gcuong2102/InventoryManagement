@@ -13,7 +13,7 @@ namespace InventoryManagerment.Controllers
     public class ImportController : BaseController
     {
         // GET: Import
-        public ActionResult Index(string searchString,string productName,string note,DateTime? dateImport, int page = 1,int pageSize=10)
+        public ActionResult Index(string searchString,string nameUser,string productName,string note,DateTime? dateImport, int page = 1,int pageSize=10)
         {
             if(GetUser().RoleID != 1)
             {
@@ -24,6 +24,7 @@ namespace InventoryManagerment.Controllers
             ViewBag.searchString = searchString;
             ViewBag.note = note;
             ViewBag.productName = productName;
+            ViewBag.nameUser = nameUser;
             if (dateImport.HasValue)
             {
                 ViewBag.dateImport = dateImport.Value.ToString("yyyy-MM-dd");
@@ -32,7 +33,7 @@ namespace InventoryManagerment.Controllers
             {
                 ViewBag.pageSize = pageSize;
             }
-            var model = new DataAccess().ListAllImportOnPagedList(searchString,productName,note, dateImport,false ,page, pageSize);
+            var model = new DataAccess().ListAllImportOnPagedList(searchString, nameUser, productName,note, dateImport,false ,page, pageSize);
             return View(model);
         }
         [HttpGet]

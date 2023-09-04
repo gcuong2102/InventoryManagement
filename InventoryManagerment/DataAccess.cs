@@ -1081,7 +1081,7 @@ namespace InventoryManagerment
             var supplier = db.Suppliers.Find(id);
             return supplier.Name;
         }
-        public IEnumerable<ImportViewModel> ListAllImportOnPagedList(string searchString,string productName,string note, DateTime? dateImport, bool status, int page, int pageSize)
+        public IEnumerable<ImportViewModel> ListAllImportOnPagedList(string searchString,string nameUser, string productName,string note, DateTime? dateImport, bool status, int page, int pageSize)
         {
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -1107,6 +1107,14 @@ namespace InventoryManagerment
             {
                 note = "";
             }
+            if (!string.IsNullOrEmpty(nameUser))
+            {
+                nameUser = nameUser.Trim();
+            }
+            else
+            {
+                nameUser = "";
+            }
             if (dateImport.HasValue)
             {
                 var result = (from import in db.Imports
@@ -1114,7 +1122,7 @@ namespace InventoryManagerment
                              join supply in db.ImportDetails on import.Code equals supply.ImportCode
                              join product in db.Products on supply.ProductCode equals product.Code
                              join user in db.Users on import.UserID equals user.ID
-                             where import.Note.Contains(note) && product.Name.Contains(productName) && supplier.Name.Contains(searchString) && import.ImportDelete == status && import.Time.Year == dateImport.Value.Year && import.Time.Month== dateImport.Value.Month && import.Time.Day==dateImport.Value.Day                            
+                             where import.Note.Contains(note) && user.Name.Contains(nameUser) && product.Name.Contains(productName) && supplier.Name.Contains(searchString) && import.ImportDelete == status && import.Time.Year == dateImport.Value.Year && import.Time.Month== dateImport.Value.Month && import.Time.Day==dateImport.Value.Day                            
                              select new ImportViewModel()
                              {
                                  Code = import.Code,
@@ -1134,7 +1142,7 @@ namespace InventoryManagerment
                              join supply in db.ImportDetails on import.Code equals supply.ImportCode
                              join product in db.Products on supply.ProductCode equals product.Code
                               join user in db.Users on import.UserID equals user.ID
-                              where import.Note.Contains(note) && product.Name.Contains(productName) && supplier.Name.Contains(searchString) && import.ImportDelete == status
+                              where import.Note.Contains(note) && user.Name.Contains(nameUser) && product.Name.Contains(productName) && supplier.Name.Contains(searchString) && import.ImportDelete == status
                              select new ImportViewModel()
                              {
                                  Code = import.Code,

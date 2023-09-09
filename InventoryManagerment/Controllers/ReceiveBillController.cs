@@ -1,11 +1,14 @@
 ﻿using InventoryManagerment.Common;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using System.Web;
 using System.Web.Mvc;
+using ImageMagick;
 
 namespace InventoryManagerment.Controllers
 {
@@ -42,10 +45,23 @@ namespace InventoryManagerment.Controllers
                 {
                     if (file != null && file.ContentLength > 0)
                     {
-                        var fileName = customerName.Trim() + Functions.GenerateUniqueCode() + Path.GetExtension(file.FileName);
+                        var fileName = customerName.Trim() + Functions.GenerateUniqueCode() + ".webp"; // Lưu với đuôi .webp
                         var path = Path.Combine(folderPath, fileName); // Lưu vào thư mục duy nhất
-                        file.SaveAs(path);
+
+                        using (var imageStream = new MemoryStream())
+                        {
+                            file.InputStream.CopyTo(imageStream);
+                            imageStream.Position = 0;
+                            using (var image = new MagickImage(imageStream))
+                            {
+                                image.AutoOrient(); // Tự động xoay hình ảnh dựa trên thông tin EXIF
+                                image.Format = MagickFormat.WebP;
+                                image.Quality = 78;
+                                image.Write(path);
+                            }
+                        }
                         listUrl.Add(path);
+
                     }
                 }
                 var username = GetUserName();
@@ -55,6 +71,17 @@ namespace InventoryManagerment.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+        private void SaveCompressedImage(Stream sourceStream, string outputPath, long quality)
+        {
+            using (var image = Image.FromStream(sourceStream))
+            {
+                var encoderParameters = new EncoderParameters(1);
+                encoderParameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+                var jpegCodec = ImageCodecInfo.GetImageDecoders().FirstOrDefault(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+                if (jpegCodec == null) return; // No jpeg codec available
+                image.Save(outputPath, jpegCodec, encoderParameters);
             }
         }
 

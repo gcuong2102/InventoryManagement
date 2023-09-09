@@ -1,7 +1,7 @@
 ﻿
 
 @{
-    ViewBag.Title = "Post";
+    ViewBag.Title = "Gửi Phiếu Giao Hàng";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <style>
@@ -90,6 +90,7 @@
     <script>
         var map;
         var selectedFiles = [];
+        var currentMarker;
         $(document).ready(function () {
             initializeDateTime()
             initializeMap();
@@ -301,7 +302,11 @@
         }
         function displaySavedLocation(lat, lng) {
             map.setView([lat, lng], 20);
-            L.marker([lat, lng]).addTo(map).openPopup();
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+
+            currentMarker = L.marker([lat, lng]).addTo(map).openPopup();
         }
         function adjustFontSize() {
             var viewportWidth = $(window).width();

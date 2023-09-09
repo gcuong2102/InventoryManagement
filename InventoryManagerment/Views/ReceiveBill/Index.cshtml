@@ -2,7 +2,7 @@
 @using PagedList.Mvc;
 @model IPagedList<InventoryManagerment.Models.DirectoryImage>
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Quản Lý Phiếu Giao Hàng";
     Layout = "~/Views/Shared/_Layout.cshtml";
     string converURl(string url)
     {
@@ -12,9 +12,7 @@
     {
         return new InventoryManagerment.DataAccess().GetUserByID(id).Name;
     }
-
 }
-
 <style>
     .square-image {
         width: 150px;
@@ -25,6 +23,7 @@
         margin-right: 10px; /* khoảng cách bên phải */
         margin-bottom: 10px; /* khoảng cách bên dưới */
     }
+
     #imageContainer {
         display: flex;
         flex-direction: row; /* Đổi từ column sang row */
@@ -32,142 +31,164 @@
         overflow-x: auto; /* Cho phép cuộn ngang nếu hình ảnh vượt quá chiều rộng của container */
         align-items: center; /* Căn giữa theo chiều dọc */
     }
+
     @@media (min-width: 992px) {
-    .col-lg-5col {
-        flex: 0 0 20%;
-        max-width: 20%;
+        .col-lg-5col {
+            flex: 0 0 20%;
+            max-width: 20%;
         }
     }
+
     .title-case {
         text-transform: capitalize;
-        }
     }
 </style>
-    <h2>Phiếu Giao Hàng</h2>
-    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <!-- Sử dụng modal-lg để modal lớn hơn -->
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title font-weight-normal" id="detailModalLabel">Chi tiết hình ảnh</h5>
-                    <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- Thông tin vị trí -->
-                    <div id="locationDetails" class="mb-4">
-                        <h6>Thông tin vị trí:</h6>
-                        <p><b>Người gửi:</b> <span id="username"></span></p>
-                        <p><b>Ngày gửi:</b> <span id="created_date"></span></p>
-                        <p><b>Tên khách hàng:</b> <span id="customername"></span></p>
-                        <p><b>Ghi chú:</b> <span id="note"></span></p>
-                        <p><b>Địa chỉ:</b> <span id="description"></span></p>
-                        <a class="btn btn-icon btn-3 btn-success" href="#" target="_blank" id="linktoMap"><span class="btn-inner--icon"><i class="material-icons">map</i></span> <span class="btn-inner--text">Google Map</span></a>
-                    </div>
-
-                    <!-- Danh sách hình ảnh -->
-                    <div id="imageContainer" class="d-flex flex-wrap">
-                        <!-- Các ảnh sẽ được thêm vào đây -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Đóng</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        @foreach (var item in Model)
-        {
-            <div class="col-4 col-md-3 col-lg-5col mt-3">
-                <div class="card">
-                    <div class="card-header">
-                       <p class="title-case" style="text-align: center;"><b>@item.NameCustomer</b></p>                       
-                        <p><b>Ngày: @item.Time.ToString("dd/MM/yyyy - HH:mm")</b> </p>
-                        <p><b>Người Gửi: @getNameUser(item.UserID)</b></p>
-                    </div>
-                    <div class="bg-image hover-overlay rounded">
-                        <a onclick="GetImagesByDirectory(this)" data-code="@item.code">
-                            <img style="cursor: pointer;" src="@converURl(item.FirstImage)" class="w-100">
-                        </a>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-    <div class="row">
-        <div style="text-align:center">
-            <div style="display:inline-block" id="listPaginationProduct">
-                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize}))
-            </div>
-        </div>
-    </div>
-    @section jsFooter{
-        <script>
-            $(document).ready(function () {
-                $("#sidenav-main").remove();
-                addClasslist();
-            });
-            function encodeUrlSegment(segment) {
-                return encodeURIComponent(segment);
-            }
-            function convertToFullUrl(dbUrl) {
-                var baseUrl = "https://tantuanhoan.com";
-                var parts = dbUrl.split('\\').filter(Boolean); // Loại bỏ các phần tử rỗng
-
-                // Mã hóa từng phần của URL
-                var encodedParts = parts.map(encodeUrlSegment);
-
-                // Ghép lại thành URL hoàn chỉnh
-                var fullUrl = baseUrl + '/' + encodedParts.join('/');
-
-                return fullUrl;
-            }
-            function updateModal(data) {
-                // Xử lý danh sách hình ảnh
-                var imageContainer = document.getElementById('imageContainer');
-                imageContainer.innerHTML = ''; // Xóa nội dung cũ
-
-                data.listImages.forEach(function (imagePath) {
-                    var imageUrl = convertToFullUrl(imagePath);
-                    // Tạo thẻ <a> cho Lightbox
-                    var anchorElement = document.createElement('a');
-                    anchorElement.href = imageUrl;
-                    anchorElement.setAttribute('data-lightbox', 'imageGallery');
-
-                    var imgElement = document.createElement('img');
-                    imgElement.src = imageUrl;
-                    imgElement.classList.add('img-fluid', 'mb-3', 'square-image'); // Thêm class cho ảnh
-
-                    anchorElement.appendChild(imgElement); // Thêm hình ảnh vào thẻ <a>
-
-                    var imgContainer = document.createElement('div'); // Tạo container cho mỗi hình ảnh
-                    imgContainer.classList.add('img-container', 'mr-2'); // Thêm class và margin-right cho container
-                    imgContainer.appendChild(anchorElement); // Thêm thẻ <a> chứa hình ảnh vào container
-
-                    imageContainer.appendChild(imgContainer); // Thêm container chứa hình ảnh vào imageContainer
-                });
-
-                // Xử lý thông tin vị trí
-                var location = data.Location[0];
-                $("#linktoMap").attr('href', getlinkGoogle(location.latitude, location.longitude))
-                $("#note").html(data.Note)
-                document.getElementById('description').textContent = location.description;
-                document.getElementById('username').textContent = data.NameStaff;
-                document.getElementById('created_date').textContent = data.Time
-                document.getElementById('customername').textContent = location.customername;
-            }
-            function getlinkGoogle(latitude, longitude) {
-                return "https://www.google.com/maps/place/" + latitude + "," + longitude;
-            }
-            function GetImagesByDirectory(element) {
-                showSpinner();
-                $.get("/ReceiveBill/GetImagesByDirectory/", { code: $(element).data("code") }, function (result) {
-                    updateModal(result)
-                    $('#detailModal').modal('show');
-                    hideSpinner();
-                });
-            }
-        </script>
+<style>
+    .card {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Thêm bóng mờ cho card */
+        transition: transform 0.3s, box-shadow 0.3s; /* Thêm hiệu ứng chuyển động */
+        border: 1px solid transparent; /* Thêm viền trong suốt */
+        overflow: auto;
+        overflow: hidden; /* Thêm dòng này */
+        position: relative; /* Thêm dòng này */
     }
+
+        .card:hover {
+            transform: translateY(-5px); /* Khi di chuột qua, card sẽ di chuyển lên một chút */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Tăng bóng mờ khi di chuột qua */
+            border-color: #007bff; /* Thay đổi màu viền khi di chuột qua */
+        }
+
+            .card:hover .bg-image img {
+                transform: scale(1.1); /* Phóng to ảnh 10% */
+                transition: transform 0.3s; /* Thêm hiệu ứng chuyển động */
+            }
+
+    .bg-image img {
+        transition: transform 0.3s;
+    }
+</style>
+<h2>Phiếu Giao Hàng</h2>
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <!-- Sử dụng modal-lg để modal lớn hơn -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-normal" id="detailModalLabel">Chi Tiết Phiếu Giao Hàng</h5>
+            </div>
+            <div class="modal-body">
+                <!-- Thông tin vị trí -->
+                <div id="locationDetails" class="mb-4">
+                    <h4 class="title-case" style="text-align: center"> <span id="customername"></span></h4>
+                    <p><b>Ngày Gửi:</b> <span id="created_date"></span></p>
+                    <p><b>Người Gửi:</b> <span id="username"></span></p>
+                    <p><b>Ghi Chú:</b> <span id="note"></span></p>
+                    <p><b>Địa Chỉ:</b> <span id="description"></span></p>
+                    <a class="btn btn-icon btn-3 btn-success" href="#" target="_blank" id="linktoMap"><span class="btn-inner--icon"><i class="material-icons">map</i></span> <span class="btn-inner--text">Google Map</span></a>
+                </div>
+
+                <!-- Danh sách hình ảnh -->
+                <div id="imageContainer" class="d-flex flex-wrap">
+                    <!-- Các ảnh sẽ được thêm vào đây -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-12 col-md-4 col-lg-2 mt-3">
+            <!-- Sửa ở đây -->
+            <div class="card" onclick="GetImagesByDirectory(this)" data-code="@item.code">
+                <div class="card-header">
+                    <p class="title-case" style="text-align: center;"><b>@item.NameCustomer</b></p>
+                    <p><b>Ngày: @item.Time.ToString("dd/MM/yyyy - HH:mm")</b> </p>
+                    <p><b>Người Gửi: @getNameUser(item.UserID)</b></p>
+                </div>
+                <div class="bg-image hover-overlay rounded">
+                    <img style="cursor: pointer;" src="@converURl(item.FirstImage)" class="w-100">
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row mt-2">
+    <div style="text-align:center">
+        <div style="display:inline-block" id="listPaginationProduct">
+            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize }))
+        </div>
+    </div>
+</div>
+@section jsFooter{
+    <script>
+        $(document).ready(function () {
+            $("#sidenav-main").remove();
+            addClasslist();
+        });
+        function encodeUrlSegment(segment) {
+            return encodeURIComponent(segment);
+        }
+        function convertToFullUrl(dbUrl) {
+            var baseUrl = "https://tantuanhoan.com";
+            var parts = dbUrl.split('\\').filter(Boolean); // Loại bỏ các phần tử rỗng
+
+            // Mã hóa từng phần của URL
+            var encodedParts = parts.map(encodeUrlSegment);
+
+            // Ghép lại thành URL hoàn chỉnh
+            var fullUrl = baseUrl + '/' + encodedParts.join('/');
+
+            return fullUrl;
+        }
+        function updateModal(data) {
+            // Xử lý danh sách hình ảnh
+            var imageContainer = document.getElementById('imageContainer');
+            imageContainer.innerHTML = ''; // Xóa nội dung cũ
+
+            data.listImages.forEach(function (imagePath, index) {
+                var imageUrl = convertToFullUrl(imagePath);
+
+                var imgElement = document.createElement('a'); // Thay đổi từ 'img' sang 'a'
+                imgElement.href = imageUrl; // Đặt thuộc tính href cho thẻ a
+                imgElement.setAttribute('data-fancybox', 'gallery'); // Thêm thuộc tính này để fancybox biết đây là một mục
+
+                var imgThumbnail = document.createElement('img'); // Tạo một thẻ img để hiển thị hình ảnh thu nhỏ
+                imgThumbnail.src = imageUrl;
+                imgThumbnail.classList.add('img-fluid', 'mb-3', 'square-image');
+
+                imgElement.appendChild(imgThumbnail); // Thêm hình ảnh thu nhỏ vào thẻ a
+
+                var imgContainer = document.createElement('div');
+                imgContainer.classList.add('img-container', 'mr-2');
+                imgContainer.appendChild(imgElement);
+
+                imageContainer.appendChild(imgContainer);
+            });
+
+            // Xử lý thông tin vị trí
+            var location = data.Location[0];
+            $("#linktoMap").attr('href', getlinkGoogle(location.latitude, location.longitude))
+            $("#note").html(data.Note)
+            document.getElementById('description').textContent = location.description;
+            document.getElementById('username').textContent = data.NameStaff;
+            document.getElementById('created_date').textContent = data.Time
+            document.getElementById('customername').textContent = location.customername;
+        }
+        function getlinkGoogle(latitude, longitude) {
+            return "https://www.google.com/maps/place/" + latitude + "," + longitude;
+        }
+        function GetImagesByDirectory(element) {
+            showSpinner();
+            $.get("/ReceiveBill/GetImagesByDirectory/", { code: $(element).data("code") }, function (result) {
+                updateModal(result)
+                $('#detailModal').modal('show');
+                hideSpinner();
+            });
+        }
+    </script>
+}

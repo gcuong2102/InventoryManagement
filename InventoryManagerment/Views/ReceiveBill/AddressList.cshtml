@@ -1,0 +1,65 @@
+﻿@using PagedList;
+@model IPagedList<InventoryManagerment.Models.EF.location>
+@{
+    ViewBag.Title = "AddressList";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string getLink(double latitude,double longitude)
+    {
+        return $"https://www.google.com/maps/place/{latitude},{longitude}";
+    }
+}
+
+<h2>AddressList</h2>
+<table>
+    <tr>
+        <td>Khách hàng</td>
+        <td>Người gửi</td>
+        <td>Thời gian gửi</td>
+        <td>Latitude</td>
+        <td>Longtitude</td>
+        <td>Link</td>
+    </tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.customername</td>
+            <td>@item.username</td>
+            <td>@item.created_date.ToString("dd/MM/yyyy HH:mm")</td>
+            <td>@item.latitude</td>
+            <td>@item.longitude</td>
+            <td><a href="@getLink(item.latitude,item.longitude)">GG Maps</a></td>
+        </tr>
+    }
+</table>
+
+<input id="lat" type="text" />
+<input id="lon" type="text" />
+<button id="test">Test</button>
+@section jsFooter{
+    <script>
+        function getAddressFromCoordinates(lat, lon, callback) {
+            const NOMINATIM_URL = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
+
+            $.ajax({
+                url: NOMINATIM_URL,
+                method: 'GET',
+                success: function (data) {
+                    callback(null, data.display_name);
+                },
+                error: function (error) {
+                    callback(error);
+                }
+            });
+        }
+
+        $("#test").on('click', function () {
+            getAddressFromCoordinates($("#lat").val(), $("#lon").val(), function (error, address) {
+                if (error) {
+                    console.error("Lỗi khi lấy địa chỉ:", error);
+                } else {
+                    console.log("Địa chỉ:", address);
+                }
+            });
+        })
+    </script>
+}

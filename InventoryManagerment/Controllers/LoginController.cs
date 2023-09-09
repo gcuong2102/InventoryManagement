@@ -30,6 +30,7 @@ namespace InventoryManagerment.Controllers
                     userCookie[Common.CommonConstants.USER_NAME] = user.UserName;
                     userCookie[Common.CommonConstants.NAME_USER] = user.Name;
                     userCookie[Common.CommonConstants.ROLE_ID] = user.RoleID.ToString();
+                    userCookie[CommonConstants.User_ID] = user.ID.ToString();
                     userCookie.Expires = DateTime.Now.AddMonths(1);
                     Response.Cookies.Add(userCookie);
                     return RedirectToAction("Index", "Home");

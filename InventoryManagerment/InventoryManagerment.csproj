@@ -490,6 +490,7 @@
     <Compile Include="Controllers\PackageController.cs" />
     <Compile Include="Controllers\ProductCategoryController.cs" />
     <Compile Include="Controllers\ProductController.cs" />
+    <Compile Include="Controllers\ReceiveBillController.cs" />
     <Compile Include="Controllers\RefundController.cs" />
     <Compile Include="Controllers\RoleController.cs" />
     <Compile Include="Controllers\StockController.cs" />
@@ -502,15 +503,18 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\DataProduct.cs" />
+    <Compile Include="Models\DirectoryImage.cs" />
     <Compile Include="Models\EF\Customer.cs" />
     <Compile Include="Models\EF\Export.cs" />
     <Compile Include="Models\EF\ExportDataViewModel.cs" />
     <Compile Include="Models\EF\ExportDetail.cs" />
     <Compile Include="Models\EF\ExportForm.cs" />
     <Compile Include="Models\EF\ImportForm.cs" />
+    <Compile Include="Models\EF\location.cs" />
     <Compile Include="Models\EF\Package.cs" />
     <Compile Include="Models\EF\ImportDetail.cs" />
     <Compile Include="Models\EF\Import.cs" />
+    <Compile Include="Models\EF\ReceiveBill.cs" />
     <Compile Include="Models\EF\Refund.cs" />
     <Compile Include="Models\EF\RefundDetail.cs" />
     <Compile Include="Models\EF\RefundForm.cs" />
@@ -616,6 +620,9 @@
     <Content Include="Views\Error\Index.cshtml" />
     <Content Include="Views\ListReceiptImport\Index.cshtml" />
     <Content Include="Views\ListReceiptImport\Edit.cshtml" />
+    <Content Include="Views\ReceiveBill\Post.cshtml" />
+    <Content Include="Views\ReceiveBill\Index.cshtml" />
+    <Content Include="Views\ReceiveBill\AddressList.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

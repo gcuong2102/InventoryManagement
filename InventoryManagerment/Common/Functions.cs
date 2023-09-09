@@ -109,5 +109,17 @@ namespace InventoryManagerment.Common
                 return "0";
             }
         }
+        public static string GenerateUniqueCode()
+        {
+            // Lấy ngày tháng năm, giờ và phút hiện tại
+            string datePart = DateTime.Now.ToString("yyyyMMddHHmm");
+
+            // Tạo một chuỗi ngẫu nhiên 8 ký tự
+            Guid guid = Guid.NewGuid();
+            string randomPart = guid.ToString().Substring(0, 8);
+
+            // Kết hợp ngày tháng năm, giờ, phút và chuỗi ngẫu nhiên để tạo mã duy nhất
+            return datePart + randomPart;
+        }
     }
 }

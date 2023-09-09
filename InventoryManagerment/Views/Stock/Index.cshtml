@@ -299,12 +299,6 @@
             setValue();
             addClasslist();
         });
-        function addClasslist() {
-            $('#listPagination ul li').each(function () {
-                $(this).addClass('page-item');
-                $(this).find('a').addClass('page-link')
-            });
-        }
     function setValue() {
         var quantity = '@ViewBag.quantity'
         var typeProduct = '@ViewBag.typeProduct';

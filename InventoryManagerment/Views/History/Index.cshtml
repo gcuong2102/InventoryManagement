@@ -125,12 +125,6 @@
             addClasslist();
             setValue();
         });
-        function addClasslist() {
-            $('#listPagination ul li').each(function () {
-                $(this).addClass('page-item');
-                $(this).find('a').addClass('page-link')
-            });
-        }
         function setValue() {
             var type = '@ViewBag.actionKey';
             $('#ActionKey option[value=' + type+']').attr('selected', 'selected');

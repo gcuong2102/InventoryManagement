@@ -20,6 +20,17 @@ namespace InventoryManagerment.Controllers
             {
                 filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index"}));
             }
+            else
+            {
+                var result = new DataAccess().CheckUserName(cookie[Common.CommonConstants.USER_NAME]);
+                if (!result)
+                {
+                    cookie.Expires = DateTime.Now.AddDays(-1);
+                    Response.Cookies.Add(cookie);
+                    filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index" }));
+                }
+
+            }
             base.OnActionExecuting(filterContext);
         }
         protected void SetAlert(string messenger, string type)

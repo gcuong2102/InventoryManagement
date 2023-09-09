@@ -1,0 +1,173 @@
+﻿@using PagedList;
+@using PagedList.Mvc;
+@model IPagedList<InventoryManagerment.Models.DirectoryImage>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string converURl(string url)
+    {
+        return @"https://tantuanhoan.com" + url;
+    }
+    string getNameUser(long id)
+    {
+        return new InventoryManagerment.DataAccess().GetUserByID(id).Name;
+    }
+
+}
+
+<style>
+    .square-image {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        cursor: pointer; /* Cho biết ảnh có thể nhấp vào */
+        text-align: left;
+        margin-right: 10px; /* khoảng cách bên phải */
+        margin-bottom: 10px; /* khoảng cách bên dưới */
+    }
+    #imageContainer {
+        display: flex;
+        flex-direction: row; /* Đổi từ column sang row */
+        flex-wrap: nowrap; /* Ngăn chặn việc xuống hàng */
+        overflow-x: auto; /* Cho phép cuộn ngang nếu hình ảnh vượt quá chiều rộng của container */
+        align-items: center; /* Căn giữa theo chiều dọc */
+    }
+    @@media (min-width: 992px) {
+    .col-lg-5col {
+        flex: 0 0 20%;
+        max-width: 20%;
+        }
+    }
+    .title-case {
+        text-transform: capitalize;
+        }
+    }
+</style>
+    <h2>Phiếu Giao Hàng</h2>
+    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <!-- Sử dụng modal-lg để modal lớn hơn -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-weight-normal" id="detailModalLabel">Chi tiết hình ảnh</h5>
+                    <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Thông tin vị trí -->
+                    <div id="locationDetails" class="mb-4">
+                        <h6>Thông tin vị trí:</h6>
+                        <p><b>Người gửi:</b> <span id="username"></span></p>
+                        <p><b>Ngày gửi:</b> <span id="created_date"></span></p>
+                        <p><b>Tên khách hàng:</b> <span id="customername"></span></p>
+                        <p><b>Ghi chú:</b> <span id="note"></span></p>
+                        <p><b>Địa chỉ:</b> <span id="description"></span></p>
+                        <a class="btn btn-icon btn-3 btn-success" href="#" target="_blank" id="linktoMap"><span class="btn-inner--icon"><i class="material-icons">map</i></span> <span class="btn-inner--text">Google Map</span></a>
+                    </div>
+
+                    <!-- Danh sách hình ảnh -->
+                    <div id="imageContainer" class="d-flex flex-wrap">
+                        <!-- Các ảnh sẽ được thêm vào đây -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-4 col-md-3 col-lg-5col mt-3">
+                <div class="card">
+                    <div class="card-header">
+                       <p class="title-case" style="text-align: center;"><b>@item.NameCustomer</b></p>                       
+                        <p><b>Ngày: @item.Time.ToString("dd/MM/yyyy - HH:mm")</b> </p>
+                        <p><b>Người Gửi: @getNameUser(item.UserID)</b></p>
+                    </div>
+                    <div class="bg-image hover-overlay rounded">
+                        <a onclick="GetImagesByDirectory(this)" data-code="@item.code">
+                            <img style="cursor: pointer;" src="@converURl(item.FirstImage)" class="w-100">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="row">
+        <div style="text-align:center">
+            <div style="display:inline-block" id="listPaginationProduct">
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize}))
+            </div>
+        </div>
+    </div>
+    @section jsFooter{
+        <script>
+            $(document).ready(function () {
+                $("#sidenav-main").remove();
+                addClasslist();
+            });
+            function encodeUrlSegment(segment) {
+                return encodeURIComponent(segment);
+            }
+            function convertToFullUrl(dbUrl) {
+                var baseUrl = "https://tantuanhoan.com";
+                var parts = dbUrl.split('\\').filter(Boolean); // Loại bỏ các phần tử rỗng
+
+                // Mã hóa từng phần của URL
+                var encodedParts = parts.map(encodeUrlSegment);
+
+                // Ghép lại thành URL hoàn chỉnh
+                var fullUrl = baseUrl + '/' + encodedParts.join('/');
+
+                return fullUrl;
+            }
+            function updateModal(data) {
+                // Xử lý danh sách hình ảnh
+                var imageContainer = document.getElementById('imageContainer');
+                imageContainer.innerHTML = ''; // Xóa nội dung cũ
+
+                data.listImages.forEach(function (imagePath) {
+                    var imageUrl = convertToFullUrl(imagePath);
+                    // Tạo thẻ <a> cho Lightbox
+                    var anchorElement = document.createElement('a');
+                    anchorElement.href = imageUrl;
+                    anchorElement.setAttribute('data-lightbox', 'imageGallery');
+
+                    var imgElement = document.createElement('img');
+                    imgElement.src = imageUrl;
+                    imgElement.classList.add('img-fluid', 'mb-3', 'square-image'); // Thêm class cho ảnh
+
+                    anchorElement.appendChild(imgElement); // Thêm hình ảnh vào thẻ <a>
+
+                    var imgContainer = document.createElement('div'); // Tạo container cho mỗi hình ảnh
+                    imgContainer.classList.add('img-container', 'mr-2'); // Thêm class và margin-right cho container
+                    imgContainer.appendChild(anchorElement); // Thêm thẻ <a> chứa hình ảnh vào container
+
+                    imageContainer.appendChild(imgContainer); // Thêm container chứa hình ảnh vào imageContainer
+                });
+
+                // Xử lý thông tin vị trí
+                var location = data.Location[0];
+                $("#linktoMap").attr('href', getlinkGoogle(location.latitude, location.longitude))
+                $("#note").html(data.Note)
+                document.getElementById('description').textContent = location.description;
+                document.getElementById('username').textContent = data.NameStaff;
+                document.getElementById('created_date').textContent = data.Time
+                document.getElementById('customername').textContent = location.customername;
+            }
+            function getlinkGoogle(latitude, longitude) {
+                return "https://www.google.com/maps/place/" + latitude + "," + longitude;
+            }
+            function GetImagesByDirectory(element) {
+                showSpinner();
+                $.get("/ReceiveBill/GetImagesByDirectory/", { code: $(element).data("code") }, function (result) {
+                    updateModal(result)
+                    $('#detailModal').modal('show');
+                    hideSpinner();
+                });
+            }
+        </script>
+    }

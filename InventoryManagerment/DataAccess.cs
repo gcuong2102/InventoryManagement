@@ -12,6 +12,8 @@ using InventoryManagerment.Models.WINFORMS;
 using InventoryManagerment.ViewModel;
 using InventoryManagerment.Models.ModelProduct;
 using InventoryManagerment.Models.List;
+using System.IO;
+using System.Web.Mvc;
 
 namespace InventoryManagerment
 {
@@ -2958,6 +2960,186 @@ namespace InventoryManagerment
 
             };
             return listAutoComplete;
+        }
+        public bool UploadImages(List<string> images, DateTime txtTime, string customerName, string note, string UserID, double latitude, double longitude, string address)
+        {
+            try
+            {
+                var userid = GetUser(UserID).ID;
+                string code = Functions.CreateCode("IL");
+                foreach (var url in images)
+                {
+                    // Chỉnh sửa đường dẫn để chỉ lưu phần tương đối
+                    var relativePath = url.Replace(@"\\103.116.105.192", "");
+
+                    var obj = new ReceiveBill()
+                    {
+                        CustomerName = customerName,
+                        Time = txtTime,
+                        Note = note,
+                        Url_Image = relativePath, // Sử dụng đường dẫn tương đối ở đây
+                        UserID = userid,
+                        Code = code,
+                    };
+                    db.ReceiveBill.Add(obj);
+                }
+                var Location = new location()
+                {
+                    latitude = latitude,
+                    longitude = longitude,
+                    username = db.Users.Find(userid).UserName,
+                    created_date = txtTime,
+                    description = address,
+                    customername = customerName,
+                    code = code
+                };
+                db.Location.Add(Location);
+                db.SaveChanges();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        //public IEnumerable<DirectoryImage> GetDataReceiveBill(DateTime? time, string customerName, string staffName, string note, string address,int page, int pageSize)
+        //{
+        //    if (!db.ReceiveBill.Any())
+        //    {
+        //        return new List<DirectoryImage>{  new DirectoryImage() }.ToPagedList(page, pageSize);
+        //    }
+
+        //    var groupedData = db.ReceiveBill
+        //                        .GroupBy(r => r.Code) // Nhóm theo mã Code
+        //                        .ToList() // Thực thi truy vấn tại đây
+        //                        .Select(g =>
+        //                        {
+        //                            var firstItem = g.OrderBy(r => r.Time).FirstOrDefault();
+        //                            return new DirectoryImage
+        //                            {
+        //                                DirectoryName = g.Key,
+        //                                FirstImage = firstItem?.Url_Image,
+        //                                UserID = firstItem?.UserID ?? 0,
+        //                                Time = firstItem?.Time ?? DateTime.MinValue,
+        //                                NameCustomer = firstItem?.CustomerName,
+        //                                code = firstItem?.Code
+        //                            };
+        //                        })
+        //                        .OrderByDescending(d => d.DirectoryName)
+        //                        .ToPagedList(page, pageSize);
+
+        //    return groupedData;
+        //}
+        public IEnumerable<DirectoryImage> GetDataReceiveBill(DateTime? time, string customerName, string staffName, string note, string address, int page, int pageSize)
+        {
+            if (!db.ReceiveBill.Any())
+            {
+                return new List<DirectoryImage> { new DirectoryImage() }.ToPagedList(page, pageSize);
+            }
+
+            var query = from rb in db.ReceiveBill
+                        join u in db.Users on rb.UserID equals u.ID
+                        select new
+                        {
+                            ReceiveBill = rb,
+                            User = u
+                        };
+
+            // Apply search filters
+            if (time.HasValue)
+            {
+                query = query.Where(q => q.ReceiveBill.Time == time.Value);
+            }
+
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                query = query.Where(q => q.ReceiveBill.CustomerName.Contains(customerName));
+            }
+
+            if (!string.IsNullOrEmpty(staffName))
+            {
+                query = query.Where(q => q.User.Name.Contains(staffName));
+            }
+
+            if (!string.IsNullOrEmpty(note))
+            {
+                query = query.Where(q => q.ReceiveBill.Note.Contains(note));
+            }
+
+            // Assuming address is part of the note in the ReceiveBill table
+            if (!string.IsNullOrEmpty(address))
+            {
+                query = query.Where(q => q.ReceiveBill.Note.Contains(address));
+            }
+
+            var groupedData = query
+                                .GroupBy(q => q.ReceiveBill.Code) // Group by Code
+                                .ToList() // Execute the query here
+                                .Select(g =>
+                                {
+                                    var firstItem = g.OrderBy(q => q.ReceiveBill.Time).FirstOrDefault();
+                                    return new DirectoryImage
+                                    {
+                                        DirectoryName = g.Key,
+                                        FirstImage = firstItem?.ReceiveBill.Url_Image,
+                                        UserID = firstItem?.ReceiveBill.UserID ?? 0,
+                                        Time = firstItem?.ReceiveBill.Time ?? DateTime.MinValue,
+                                        NameCustomer = firstItem?.ReceiveBill.CustomerName,
+                                        code = firstItem?.ReceiveBill.Code
+                                    };
+                                })
+                                .OrderByDescending(d => d.DirectoryName)
+                                .ToPagedList(page, pageSize);
+
+            return groupedData;
+        }
+
+        public bool CheckUserName(string username)
+        {
+            return db.Users.Where(x => x.UserName == username).Any();
+        }
+        public object SaveLocation(double latitude, double longitude,string note,string customername, string userName)
+        {
+            try
+            {
+                var Location = new location()
+                {
+                    latitude = latitude,
+                    longitude = longitude,
+                    username = userName,
+                    created_date = DateTime.Now,
+                    description = note,
+                    customername = customername
+                };
+                db.Location.Add(Location);
+                db.SaveChanges();
+                return new {result = true, message = "Lưu vị trí thành công", latitude = latitude, longitude = longitude};
+            }
+            catch(Exception ex)
+            {
+                return new { result = false, message = "Có lỗi xảy ra: " + ex };
+            }
+        }
+        public object GetAddressList(int page, int pageSize)
+        {
+            return db.Location.OrderByDescending(x => x.created_date).ToPagedList(page, pageSize);
+        }
+
+        public object GetImagesByDirectory(string code)
+        {
+            var listImages = db.ReceiveBill.Where(r => r.Code == code).Select(r => r.Url_Image).ToList();
+            var Location = db.Location.Where(x => x.code == code);
+            var bill = db.ReceiveBill.Where(r => r.Code == code).FirstOrDefault();
+            string note = "";
+            if (string.IsNullOrEmpty(bill.Note.Trim()))
+            {
+                note = "Không có ghi chú";
+            }
+            else
+            {
+                note = bill.Note;
+            }
+            return new { listImages = listImages, Location = Location, Note = note, Time = bill.Time.ToString("dd/MM/yyyy - HH:mm"),NameStaff = db.Users.Find(bill.UserID).Name };
         }
     }
 }

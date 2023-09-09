@@ -19,9 +19,22 @@ namespace InventoryManagerment.Controllers
             {
                 filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index" }));
             }
-            else if (long.Parse(cookie[Common.CommonConstants.ROLE_ID]) != 1)
+            else if(cookie != null)
             {
-                filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Home", action = "Index" }));
+                var result = new DataAccess().CheckUserName(cookie[Common.CommonConstants.USER_NAME]);
+                if (!result)
+                {
+                    cookie.Expires = DateTime.Now.AddDays(-1);
+                    Response.Cookies.Add(cookie);
+                    filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index" }));
+                }
+                else
+                {
+                    if (long.Parse(cookie[Common.CommonConstants.ROLE_ID]) != 1)
+                    {
+                        filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Home", action = "Index" }));
+                    }
+                }
             }
             base.OnActionExecuting(filterContext);
         }

@@ -33,6 +33,8 @@ namespace InventoryManagerment.Models.EF
         public virtual DbSet<Customer> Customers { get; set; }
         public virtual DbSet<Refund> Refunds { get; set; }
         public virtual DbSet<RefundDetail> RefundDetails { get; set; }
+        public virtual DbSet<ReceiveBill> ReceiveBill { get; set; }
+        public virtual DbSet<location> Location { get; set; }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Product>()

@@ -189,12 +189,6 @@
             }
             return x1 + x2;
         }
-        function addClasslist() {
-            $('#listPaginationProduct ul li').each(function () {
-                $(this).addClass('page-item');
-                $(this).find('a').addClass('page-link')
-            });
-        }
         function SetAutoComplete() {
             $.get("/Bill/SetAutoCompleteForIndex/", {}, function (data) {
                 AutoComplete(data.NameCustomer, $("#txtCustomer"))

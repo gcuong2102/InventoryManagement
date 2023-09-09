@@ -63,15 +63,18 @@ namespace InventoryManagerment.Controllers
             var dao = new DataAccess();
             var result = dao.UpdateUser(model,GetUserName());
             SetViewBag(model.RoleID);
-            if (result)
+            HttpCookie httpcookie = Request.Cookies[Common.CommonConstants.USER_DATA];
+            if (model.ID.ToString() == httpcookie[Common.CommonConstants.User_ID])
             {
-                SetAlert("Cập nhật người dùng thành công", "success");
+                httpcookie.Expires = DateTime.Now.AddDays(-1);
+                Response.Cookies.Add(httpcookie);
+                RedirectToAction("Index", "Login");
             }
-            else 
-            { 
-                SetAlert("Cập nhật người dùng thất bại", "danger");
+            else
+            {
+                return View();
             }
-            return View();
+            return RedirectToAction("Index", "Login");
         }
         public void SetViewBag(long? selectedId = null)
         {

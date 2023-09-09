@@ -1,0 +1,357 @@
+﻿
+
+@{
+    ViewBag.Title = "Post";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .large-button .material-icons {
+        font-size: 34px;
+    }
+
+    .large-button {
+        font-size: 16px;
+        padding: 18px 38px;
+    }
+
+    #map {
+        transition: opacity ease 0.5s;
+    }
+</style>
+<!-- Modal -->
+<div class="modal fade" id="modalAddress" tabindex="-1" aria-labelledby="modalAdrressLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAdrressLabel">Thông tin địa chỉ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group input-group-static my-3 is-filled">
+                    <label>Địa chỉ chính xác</label>
+                    <textarea id="noteLocation" name="noteLocation" class="form-control" rows="3"> </textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnGetAddress" type="button" class="btn btn-success">Lấy lại địa chỉ</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+<h2 style="font-size:32px">Gửi Phiếu Giao Hàng</h2>
+<form action="/YourController/UploadImages" method="post" enctype="multipart/form-data" id="uploadForm">
+    <div class="row">
+        <div class="input-group input-group-static my-3 is-filled">
+            <label class="text-custom">Ngày nhập</label>
+            <input disabled type="datetime-local" id="txtTime" name="txtTime" class="form-control text-custom" value="@DateTime.Now.ToString("yyyy-MM-ddThh:mm")" />
+        </div>
+        <div class="input-group input-group-static my-3 is-filled">
+            <label class="text-custom">Tên Khách Hàng</label>
+            <input type="text" id="txtCustomer" name="customerName" class="form-control text-custom" />
+        </div>
+        <div class="input-group input-group-static my-3 is-filled">
+            <label class="text-custom">Ghi Chú (Nếu Có)</label>
+            <textarea id="txtNote" name="note" class="form-control text-custom" rows="3"> </textarea>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6 d-flex align-items-center justify-content-center">
+            <button type="button" id="sendLocation" style="width:100%" class="btn btn-success d-flex flex-column align-items-center flex-grow-1 large-button">
+                <span class="material-icons mb-2">pin_drop</span>
+                Lưu vị trí hiện tại
+            </button>
+        </div>
+        <div class="col-6 d-flex align-items-center justify-content-center">
+            <div id="map" style="width: 100%; height: 100%"></div>
+        </div>
+    </div>
+    <input hidden type="file" name="image" accept="image/*" id="imageInput" multiple>
+
+    <div class="d-flex">
+        <!-- First Button with enlarged icon on top and text below -->
+        <button type="button" id="takePic" class="btn btn-info d-flex flex-column align-items-center flex-grow-1 large-button">
+            <span class="material-icons mb-2">photo_camera</span>
+            Bấm Vào Đây Để Chụp Hình
+        </button>
+
+        <!-- Second Button with enlarged icon on top and text below -->
+        <button type="submit" class="btn btn-primary d-flex flex-column align-items-center flex-grow-1 ms-2 large-button">
+            <span class="material-icons mb-2">upload</span>
+            Bấm Vào Đây Để Đăng Hình
+        </button>
+    </div>
+    <table id="imagesTable">
+        <!-- Ảnh sẽ được thêm vào đây -->
+    </table>
+</form>
+
+@section jsFooter{
+    <script>
+        var map;
+        var selectedFiles = [];
+        $(document).ready(function () {
+            initializeDateTime()
+            initializeMap();
+            removeUnwantedElements();
+            handleUploadFormSubmit()
+            handleBtn();
+            adjustFontSize();
+            SetAutoComplete();
+            $(window).resize(adjustFontSize);
+        });
+        function initializeMap() {
+            map = L.map('map').setView([10.7761, 106.7009], 20);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);;
+        }
+        function removeUnwantedElements() {
+            $(".nav-item.d-xl-none.ps-3.d-flex.align-items-center").first().remove();
+            $("#sidenav-main").remove();
+            $("div.leaflet-control-attribution").first().remove();
+            $(".leaflet-control-zoom.leaflet-bar.leaflet-control").first().remove();
+            $("#map").css('opacity', '0');
+        }
+        function showMap() {
+            $("#map").css('opacity', '1');
+        }
+        function handleBtn() {
+            $('#imageInput').on('change', function () {
+                for (var i = 0; i < this.files.length; i++) {
+                    selectedFiles.push(this.files[i]);
+                    var file = this.files[i];
+                    var reader = new FileReader();
+                    reader.onload = (function (file) {
+                        return function (e) {
+                            var imgCell = $('<td style="width: 25%"></td>');
+                            var img = $('<img>').attr('src', e.target.result).css('width', '100%');
+                            img.on('click', function () {
+                                $.confirm({
+                                    title: 'Thông báo',
+                                    content: 'Bạn có muốn xóa hình ảnh này không?',
+                                    buttons: {
+                                        confirm:
+                                        {
+                                            text: 'Đồng ý',
+                                            key: ['enter'],
+                                            action: function () {
+                                                imgCell.remove();
+                                                var index = selectedFiles.indexOf(file);
+                                                if (index > -1) {
+                                                    selectedFiles.splice(index, 1);
+                                                }
+                                            }
+                                        },
+                                        cancel: {
+                                            text: 'Hủy',
+                                            action: function () {
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                            imgCell.append(img);
+
+                            var lastRow = $('#imagesTable tr').last();
+                            if (!lastRow.length || lastRow.children().length === 4) {
+                                lastRow = $('<tr></tr>');
+                                $('#imagesTable').append(lastRow);
+                            }
+                            lastRow.append(imgCell);
+                        };
+                    })(file);
+                    reader.readAsDataURL(file);
+                }
+            });
+            $("#takePic").on('click', function () {
+                $("#imageInput").click();
+            })
+            $("#sendLocation").on('click', function () {
+                showSpinner();
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        var lat = position.coords.latitude;
+                        var lng = position.coords.longitude;
+                        displaySavedLocation(lat, lng);
+                        showMap();
+                        getAddressFromCoordinates(lat, lng, function (error, address) {
+                            if (error) {
+                                hideSpinner();
+                                $.alert(error, "Lỗi khi lấy địa chỉ")
+                            } else {
+                                hideSpinner();
+                                $('#modalAddress').modal('show');
+                                if ($("#noteLocation").val().trim().length == 0) {
+                                    $("#noteLocation").val(translateAndTrim(address));
+                                }
+                            }
+                        });
+                    });
+                }
+                else {
+                    alert("Trình duyệt không hỗ trợ Geolocation.");
+                }
+            })
+            $("#btnGetAddress").on('click', function () {
+                showSpinner
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        var lat = position.coords.latitude;
+                        var lng = position.coords.longitude;
+                        displaySavedLocation(lat, lng);
+                        getAddressFromCoordinates(lat, lng, function (error, address) {
+                            if (error) {
+                                $.alert(error, "Lỗi khi lấy địa chỉ")
+                                hideSpinner();
+                            } else {
+                                $("#noteLocation").val(translateAndTrim(address));
+                                hideSpinner()
+                            }
+                        });
+                    });
+                }
+                else {
+                    $.alert("Trình duyệt không hỗ trợ Geolocation.");
+                    hideSpinner()
+                }
+            })
+        }
+        function initializeDateTime() {
+            updateDateTime();
+            setInterval(updateDateTime, 60000);
+        }
+        function handleUploadFormSubmit() {
+            document.getElementById('uploadForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                // Kiểm tra xem có hình ảnh nào được chọn không
+                if (selectedFiles.length == 0) {
+                    $.alert('Chưa có hình ảnh nào được chọn', 'Thông Báo');
+                    return;
+                }
+                // Kiểm tra xem tên khách hàng đã được nhập chưa
+                if ($("#txtCustomer").val().length == 0) {
+                    $.alert('Vui lòng nhập tên khách hàng', 'Thông Báo');
+                    return;
+                }
+                // Kiểm tra xem địa chỉ đã được nhập chưa
+                if ($("#noteLocation").val().length == 0) {
+                    $.alert('Vui lòng nhấn lưu địa chỉ', 'Thông Báo');
+                    return;
+                }
+                var formData = new FormData();
+                for (var i = 0; i < selectedFiles.length; i++) {
+                    formData.append('images', selectedFiles[i]);
+                }
+                formData.append('txtTime', document.getElementById('txtTime').value);
+                formData.append('customerName', document.getElementById('txtCustomer').value);
+                formData.append('note', document.getElementById('txtNote').value);
+                showSpinner();
+                // Lấy vị trí địa lý và sau đó gửi yêu cầu AJAX
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+                    var note = $("#noteLocation").val();
+                    formData.append('latitude', lat);
+                    formData.append('longitude', lng);
+                    formData.append('address', note);
+
+                    // Sử dụng $.ajax với phương thức POST
+                    $.ajax({
+                        url: '/ReceiveBill/UploadImages/',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (data) {
+                            hideSpinner();
+                            if (data.success) {
+                                $.confirm({
+                                    title: 'Thông Báo',
+                                    content: 'Đăng tải ảnh thành công',
+                                    buttons: {
+                                        confirm: {
+                                            text: 'Xác nhận',
+                                            action: function () {
+                                                reloadPage();
+                                            }
+                                        }
+                                    }
+                                });
+                            } else {
+                                console.log(data, "Lỗi");
+                            }
+                        },
+                        error: function (error) {
+                            hideSpinner()
+                            console.log(error, 'Có lỗi xảy ra, vui lòng thử lại');
+                        }
+                    });
+                });
+            });
+        }
+        function reloadPage() {
+            location.reload();
+        }
+        function updateDateTime() {
+            const now = new Date();
+            // Convert to Hanoi timezone (UTC+7)
+            const offset = 7;
+            const hanoiTime = new Date(now.getTime() + offset * 3600 * 1000);
+            const formattedDate = hanoiTime.toISOString().slice(0, 16);
+            document.getElementById('txtTime').value = formattedDate;
+        }
+        function displaySavedLocation(lat, lng) {
+            map.setView([lat, lng], 20);
+            L.marker([lat, lng]).addTo(map).openPopup();
+        }
+        function adjustFontSize() {
+            var viewportWidth = $(window).width();
+            var fontSize = viewportWidth * 0.02; // 2vw
+
+            // Kiểm tra và giới hạn kích thước chữ
+            if (fontSize < 20) fontSize = 20;
+            if (fontSize > 28) fontSize = 28;
+
+            $('.text-custom').css('font-size', fontSize + 'px');
+        }
+        function getAddressFromCoordinates(lat, lon, callback) {
+            const NOMINATIM_URL = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
+            $.ajax({
+                url: NOMINATIM_URL,
+                method: 'GET',
+                success: function (data) {
+                    callback(null, data.display_name);
+                },
+                error: function (error) {
+                    callback(error);
+                }
+            });
+        }
+        function translateAndTrim(address) {
+                // Translate 'Ward' to 'Phường'
+                address = address.replace(/Ward/g, 'Phường');
+
+                // Translate 'District' to 'Quận'
+                address = address.replace(/District/g, 'Quận');
+
+                var cityIndex = address.indexOf('City');
+                var provinceIndex = address.indexOf('Province');
+
+                if (provinceIndex > cityIndex && cityIndex !== -1) {
+                    address = address.substring(0, provinceIndex).trim();
+                } else if (cityIndex !== -1) {
+                    address = address.substring(0, cityIndex).trim();
+                }
+                // Remove numbers greater than 3000
+                address = address.replace(/, \d{4,}/g, '');
+                return address;
+            }
+        function SetAutoComplete() {
+            showSpinner();
+            $.get("/ReceiveBill/GetNameCustomer/", {}, function (data) {
+                AutoComplete(data, $("#txtCustomer"));
+                hideSpinner();
+            })
+        }
+    </script>
+}
+

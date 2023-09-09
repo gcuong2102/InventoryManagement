@@ -283,12 +283,6 @@
             $('#status option[value=' + status+']').attr('selected', 'selected');
             $('#pageSize option[value=' + pageSize+']').attr('selected', 'selected');
         }
-        function addClasslist() {
-            $('#listPagination ul li').each(function () {
-                $(this).addClass('page-item');
-                $(this).find('a').addClass('page-link')
-            });
-        }
         function ChangeStatus(element) {
             var code = $(element).find('span').attr('id');
             var currentStt = $(element).find('span').html();

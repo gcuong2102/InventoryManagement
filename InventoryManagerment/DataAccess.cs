@@ -14,6 +14,10 @@ using InventoryManagerment.Models.ModelProduct;
 using InventoryManagerment.Models.List;
 using System.IO;
 using System.Web.Mvc;
+using System.Web.Services.Description;
+using ImageMagick;
+using System.Drawing.Printing;
+using System.Web.UI;
 
 namespace InventoryManagerment
 {
@@ -1183,7 +1187,7 @@ namespace InventoryManagerment
                 }
                 else
                 {
-                    Import phieuxuat = new Import();
+                    Models.EF.Import phieuxuat = new Models.EF.Import();
                     phieuxuat.Code = newcode;
                     var supplierVar = GetSupplier(null, listProduct.FirstOrDefault().SupplierCode);
                     phieuxuat.SupplierID = supplierVar.ID;
@@ -3048,7 +3052,7 @@ namespace InventoryManagerment
             // Apply search filters
             if (time.HasValue)
             {
-                query = query.Where(q => q.ReceiveBill.Time == time.Value);
+                query = query.Where(q => q.ReceiveBill.Time.Year == time.Value.Year && q.ReceiveBill.Time.Month == time.Value.Month && q.ReceiveBill.Time.Day == time.Value.Day);
             }
 
             if (!string.IsNullOrEmpty(customerName))
@@ -3088,12 +3092,11 @@ namespace InventoryManagerment
                                         code = firstItem?.ReceiveBill.Code
                                     };
                                 })
-                                .OrderByDescending(d => d.DirectoryName)
+                                .OrderByDescending(d => d.Time)
                                 .ToPagedList(page, pageSize);
 
             return groupedData;
         }
-
         public bool CheckUserName(string username)
         {
             return db.Users.Where(x => x.UserName == username).Any();
@@ -3124,7 +3127,6 @@ namespace InventoryManagerment
         {
             return db.Location.OrderByDescending(x => x.created_date).ToPagedList(page, pageSize);
         }
-
         public object GetImagesByDirectory(string code)
         {
             var listImages = db.ReceiveBill.Where(r => r.Code == code).Select(r => r.Url_Image).ToList();
@@ -3140,6 +3142,236 @@ namespace InventoryManagerment
                 note = bill.Note;
             }
             return new { listImages = listImages, Location = Location, Note = note, Time = bill.Time.ToString("dd/MM/yyyy - HH:mm"),NameStaff = db.Users.Find(bill.UserID).Name };
+        }
+        public object GetListAutoCompleteForReceiveBill()
+        {
+            var listCustomer = new DataAccess2().GetNameCustomer();
+            var listStaffName = db.Users.Select(x => x.Name).ToList();
+            return new
+            {
+                customers = listCustomer,
+                users = listStaffName
+            };
+        }
+        public object DeleteImage(string code)
+        {
+            try
+            {
+                var listImage = db.ReceiveBill.Where(x => x.Code == code).ToList();
+                var location = db.Location.Where(x => x.code == code).FirstOrDefault();
+                var path = listImage.FirstOrDefault().Url_Image;
+                string basePath = @"\\103.116.105.192\ReceivedBill";
+                var directoryPath = Path.Combine(basePath, path.Split(new string[] { @"\" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                if (Directory.Exists(directoryPath))
+                {
+                    Directory.Delete(directoryPath, true); // Xóa thư mục và tất cả thư mục con bên trong
+                }
+                else
+                {
+                    return new { result = false, Message = "Thư mục không tồn tại" };
+                }
+                foreach (var item in listImage)
+                {
+                    db.ReceiveBill.Remove(item);
+                }
+                db.Location.Remove(location);
+                db.SaveChanges();
+                return new { result = true, Message = "Xóa thành công" };
+            }
+            catch(Exception ex)
+            {
+                return new { result = false, Message = "Lỗi: " + ex };
+            }
+        }
+        public object GetReplacementData(int currentPage, int pageSize, DateTime? time, string customerName, string staffName, string note, string address)
+        {
+            var query = from rb in db.ReceiveBill
+                        join u in db.Users on rb.UserID equals u.ID
+                        select new
+                        {
+                            ReceiveBill = rb,
+                            User = u
+                        };
+
+            // Lọc dữ liệu dựa trên các tham số tìm kiếm
+            if (time.HasValue)
+            {
+                query = query.Where(q => q.ReceiveBill.Time.Year == time.Value.Year && q.ReceiveBill.Time.Month == time.Value.Month && q.ReceiveBill.Time.Day == time.Value.Day);
+            }
+
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                query = query.Where(q => q.ReceiveBill.CustomerName.Contains(customerName));
+            }
+
+            if (!string.IsNullOrEmpty(staffName))
+            {
+                query = query.Where(q => q.User.Name.Contains(staffName));
+            }
+
+            if (!string.IsNullOrEmpty(note))
+            {
+                query = query.Where(q => q.ReceiveBill.Note.Contains(note));
+            }
+
+            if (!string.IsNullOrEmpty(address))
+            {
+                query = query.Where(q => q.ReceiveBill.Note.Contains(address)); // Giả định địa chỉ là một phần của ghi chú trong bảng ReceiveBill
+            }
+
+            var groupedData = query
+                                .GroupBy(q => q.ReceiveBill.Code) // Nhóm theo Mã
+                                .ToList() // Thực thi truy vấn tại đây
+                                .Select(g =>
+                                {
+                                    var firstItem = g.OrderBy(q => q.ReceiveBill.Time).FirstOrDefault();
+                                    return new DirectoryImage
+                                    {
+                                        DirectoryName = g.Key,
+                                        FirstImage = firstItem?.ReceiveBill.Url_Image,
+                                        UserID = firstItem?.ReceiveBill.UserID ?? 0,
+                                        Time = firstItem?.ReceiveBill.Time ?? DateTime.MinValue,
+                                        NameCustomer = firstItem?.ReceiveBill.CustomerName,
+                                        code = firstItem?.ReceiveBill.Code
+                                    };
+                                })
+                                .OrderByDescending(d => d.Time)
+                                .Skip((currentPage - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToList();
+
+            if (groupedData.Count < pageSize)
+            {
+                return new
+                {
+                    success = false,
+                    data = new DirectoryImage()
+                };
+            }
+
+            // Lấy mục dữ liệu cuối cùng để thay thế
+            var replacementData = groupedData.Last();
+
+            return new
+            {
+                success = true,
+                data = replacementData,
+                time = replacementData.Time.ToString("dd/MM/yyyy - HH/mm"),
+                nameStaff = db.Users.Find(replacementData.UserID).Name.ToString(),
+            };
+        }
+        public object GetMultiReplacementData(int currentPage, int pageSize, DateTime? time, string customerName, string staffName, string note, string address, int deletedCount = 0)
+        {
+            var query = from rb in db.ReceiveBill
+                        join u in db.Users on rb.UserID equals u.ID
+                        select new
+                        {
+                            ReceiveBill = rb,
+                            User = u
+                        };
+            // Lọc dữ liệu dựa trên các tham số tìm kiếm
+            if (time.HasValue)
+            {
+                query = query.Where(q => q.ReceiveBill.Time.Year == time.Value.Year && q.ReceiveBill.Time.Month == time.Value.Month && q.ReceiveBill.Time.Day == time.Value.Day);
+            }
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                query = query.Where(q => q.ReceiveBill.CustomerName.Contains(customerName));
+            }
+            if (!string.IsNullOrEmpty(staffName))
+            {
+                query = query.Where(q => q.User.Name.Contains(staffName));
+            }
+            if (!string.IsNullOrEmpty(note))
+            {
+                query = query.Where(q => q.ReceiveBill.Note.Contains(note));
+            }
+            if (!string.IsNullOrEmpty(address))
+            {
+                query = query.Where(q => q.ReceiveBill.Note.Contains(address)); // Giả định địa chỉ là một phần của ghi chú trong bảng ReceiveBill
+            }
+
+            int totalRecords = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            // Kiểm tra xem currentPage có phải là trang cuối cùng không
+            if (currentPage == totalPages)
+            {
+                return new
+                {
+                    success = false,
+                    message = "Bạn đang ở trang cuối cùng."
+                };
+            }
+
+            var totalDataNeeded = pageSize + deletedCount; // Tổng số dữ liệu cần lấy
+
+            var groupedData = query
+                                .GroupBy(q => q.ReceiveBill.Code)
+                                .ToList()
+                                .Select(g =>
+                                {
+                                    var firstItem = g.OrderBy(q => q.ReceiveBill.Time).FirstOrDefault();
+                                    return new DirectoryImage
+                                    {
+                                        DirectoryName = g.Key,
+                                        FirstImage = firstItem?.ReceiveBill.Url_Image,
+                                        UserID = firstItem?.ReceiveBill.UserID ?? 0,
+                                        Time = firstItem?.ReceiveBill.Time ?? DateTime.MinValue,
+                                        NameCustomer = firstItem?.ReceiveBill.CustomerName,
+                                        code = firstItem?.ReceiveBill.Code
+                                    };
+                                })
+                                .OrderByDescending(d => d.Time)
+                                .Skip((currentPage - 1) * pageSize)
+                                .Take(totalDataNeeded)
+                                .ToList();
+
+            if (groupedData.Count < totalDataNeeded)
+            {
+                return new
+                {
+                    success = true,
+                    data = groupedData, // Trả về tất cả dữ liệu còn lại
+                    message = "Không đủ dữ liệu để thay thế, trả về tất cả dữ liệu còn lại."
+                };
+            }
+
+            // Lấy dữ liệu thay thế từ danh sách
+            var replacementData = groupedData.Skip(pageSize).ToList();
+
+            return new
+            {
+                success = true,
+                data = replacementData,
+                time = replacementData.Last().Time.ToString("dd/MM/yyyy - HH/mm"),
+                nameStaff = db.Users.Find(replacementData.Last().UserID).Name.ToString(),
+            };
+        }
+
+        public object DeleteMultipleFolder(List<string> codes)
+        {
+            try
+            {
+                foreach (var item in codes)
+                {
+                    DeleteImage(item);
+                }
+                return new
+                {
+                    result = false,
+                    message = "thanh cong"
+                };
+            }
+            catch(Exception ex)
+            {
+                return new
+                {
+                    result = false,
+                    message = ex.Message,
+                };
+            }
+            
         }
     }
 }

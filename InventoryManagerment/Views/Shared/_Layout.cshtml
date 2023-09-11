@@ -162,10 +162,19 @@
             });
         }
         function addClasslist() {
-            $('#listPaginationProduct ul li').each(function () {
-                $(this).addClass('page-item');
-                $(this).find('a').addClass('page-link')
-            });
+            if ($('#listPaginationProduct')) {
+                $('#listPaginationProduct ul li').each(function () {
+                    $(this).addClass('page-item');
+                    $(this).find('a').addClass('page-link')
+                });
+            } else {
+                $('#listPagination ul li').each(function () {
+                    $(this).addClass('page-item');
+                    $(this).find('a').addClass('page-link')
+                });
+            }
+            
+
         }
     </script>
     <script>

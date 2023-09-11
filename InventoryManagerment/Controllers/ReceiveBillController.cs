@@ -15,12 +15,24 @@ namespace InventoryManagerment.Controllers
     public class ReceiveBillController : BaseController
     {
         // GET: ReceiveBill
+        [HttpGet]
         public ActionResult Index(DateTime? time,string customerName, string staffName, string note, string address ,int page = 1, int pageSize = 15)
         {
-            var model = new DataAccess().GetDataReceiveBill(time,customerName,  staffName,  note,  address,page, pageSize);
+            SetViewBag(time, customerName, staffName, note, address, pageSize);
+            var model = new DataAccess().GetDataReceiveBill(time,customerName,staffName,note,address,page,pageSize);
             return View(model);
         }
-
+        public void SetViewBag(DateTime? time, string customerName, string staffName, string note, string address, int pageSize)
+        {
+            if (time.HasValue)
+            {
+                ViewBag.time = time;
+            }
+            if (pageSize != 15)
+            {
+                ViewBag.pageSize = pageSize;
+            }
+        }
         public ActionResult Post()
         {
             return View();
@@ -84,7 +96,6 @@ namespace InventoryManagerment.Controllers
                 image.Save(outputPath, jpegCodec, encoderParameters);
             }
         }
-
         public ActionResult AddressList(int page = 1,int pageSize = 30)
         {
             var model = new DataAccess().GetAddressList(page,pageSize);
@@ -101,6 +112,35 @@ namespace InventoryManagerment.Controllers
         {
             var images = new DataAccess().GetImagesByDirectory(code);
             return Json(images, JsonRequestBehavior.AllowGet);
+        }
+        [HttpGet]
+        public JsonResult GetAutoComplete()
+        {
+            var result = new DataAccess().GetListAutoCompleteForReceiveBill();
+            return Json(result,JsonRequestBehavior.AllowGet);
+        }
+        [HttpPost]
+        public JsonResult Delete(string code)
+        {
+            var result = new DataAccess().DeleteImage(code);
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+        [HttpGet] 
+        public JsonResult GetNextData(DateTime? time, string customerName, string staffName, string note, string address, int page, int pageSize) 
+        {
+            var result = new DataAccess().GetReplacementData(page, pageSize,time, customerName, staffName, note, address);
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+        [HttpGet]
+        public JsonResult GetMultiNextData(DateTime? time, string customerName, string staffName, string note, string address, int page, int pageSize)
+        {
+            var result = new DataAccess().GetReplacementData(page, pageSize, time, customerName, staffName, note, address);
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+        public JsonResult DeleteMultiple(List<string> listCode)
+        {
+            var result = new DataAccess().DeleteMultipleFolder(listCode);
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
     }
 }

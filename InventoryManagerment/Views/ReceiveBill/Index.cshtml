@@ -32,12 +32,30 @@
         align-items: center; /* Căn giữa theo chiều dọc */
     }
 
+    /* Máy tính */
     @@media (min-width: 992px) {
         .col-lg-5col {
             flex: 0 0 20%;
             max-width: 20%;
         }
     }
+
+    /* Máy tính bảng */
+    @@media (min-width: 760px) and (max-width: 992px) {
+        .col-md-3col {
+            flex: 0 0 33.33%;
+            max-width: 33.33%;
+        }
+    }
+
+    /* Điện thoại */
+    @@media (max-width: 760px) {
+        .col-1col {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+
 
     .title-case {
         text-transform: capitalize;
@@ -51,24 +69,52 @@
         overflow: auto;
         overflow: hidden; /* Thêm dòng này */
         position: relative; /* Thêm dòng này */
+        max-height:480px;
     }
-
         .card:hover {
-            transform: translateY(-5px); /* Khi di chuột qua, card sẽ di chuyển lên một chút */
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Tăng bóng mờ khi di chuột qua */
             border-color: #007bff; /* Thay đổi màu viền khi di chuột qua */
         }
-
-            .card:hover .bg-image img {
-                transform: scale(1.1); /* Phóng to ảnh 10% */
-                transition: transform 0.3s; /* Thêm hiệu ứng chuyển động */
-            }
-
     .bg-image img {
         transition: transform 0.3s;
     }
+    .is-selected {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        border: 2px solid transparent;
+        border-color: #FF0000;
+    }
+    .card.is-selected:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35); /* Giữ nguyên bóng mờ */
+        border-color: #FF0000; /* Đặt màu viền là màu đỏ, giữ nguyên màu viền khi có class is-selected */
+    }
 </style>
-<h2>Phiếu Giao Hàng</h2>
+<div class="row">
+    <div class="col">
+        <h3>Phiếu Giao Hàng</h3>
+    </div>
+    <div class="col" style="text-align:right">
+        <button hidden id="btnCloseSelectMode" class="btn btn-icon btn-3 btn-success" type="button">
+            <span class="btn-inner--icon"><i class="material-icons">close</i></span>
+            <span class="btn-inner--text">Hủy</span>
+        </button>
+        <button hidden id="btnDeleteMultiple" class="btn btn-icon btn-3 btn-danger" type="button">
+            <span class="btn-inner--icon"><i class="material-icons">done</i></span>
+            <span class="btn-inner--text">Đồng ý</span>
+        </button>
+        <div class="btn-group dropdown">
+            <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="material-icons">construction</i> Công cụ
+            </button>
+            <ul class="dropdown-menu px-2 py-3" aria-labelledby="dropdownMenuButton">
+                <li><a id="selectDelete" class="dropdown-item border-radius-md" href="javascript:;">Xóa</a></li>
+            </ul>
+        </div>
+        <button class="btn btn-icon btn-3 btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+            <span class="btn-inner--icon"><i class="material-icons">search</i></span>
+            <span class="btn-inner--text">Tìm kiếm</span>
+        </button>
+    </div>
+</div>
 <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <!-- Sử dụng modal-lg để modal lớn hơn -->
@@ -77,13 +123,13 @@
                 <h5 class="modal-title font-weight-normal" id="detailModalLabel">Chi Tiết Phiếu Giao Hàng</h5>
             </div>
             <div class="modal-body">
-                <!-- Thông tin vị trí -->
+                <!-- Chi tiết phiếu gửi -->
                 <div id="locationDetails" class="mb-4">
                     <h4 class="title-case" style="text-align: center"> <span id="customername"></span></h4>
                     <p><b>Ngày Gửi:</b> <span id="created_date"></span></p>
                     <p><b>Người Gửi:</b> <span id="username"></span></p>
-                    <p><b>Ghi Chú:</b> <span id="note"></span></p>
-                    <p><b>Địa Chỉ:</b> <span id="description"></span></p>
+                    <p class="title-case"><b>Ghi Chú:</b> <span id="note"></span></p>
+                    <p class="title-case"><b>Địa Chỉ:</b> <span id="description"></span></p>
                     <a class="btn btn-icon btn-3 btn-success" href="#" target="_blank" id="linktoMap"><span class="btn-inner--icon"><i class="material-icons">map</i></span> <span class="btn-inner--text">Google Map</span></a>
                 </div>
 
@@ -93,21 +139,69 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn bg-gradient-info">Sửa</button>
+                <button id="btnDelete" type="button" data-spcode="" onclick="DeleteImageFolder(this)" class="btn bg-gradient-danger">Xóa</button>
                 <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>
 </div>
-<div class="row">
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchtitleModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-normal" id="searchtitleModal">Tìm kiếm phiếu giao hàng</h5>
+                <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("Index", "ReceiveBill", method: FormMethod.Get))
+                {
+                    <div class="input-group mb-3">
+                        <div class="input-group input-group-static mb-4">
+                            <input id="txtCustomer" placeholder="Nhập Tên Khách Hàng" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="" name="customerName">
+                        </div>
+                        <div class="input-group input-group-static mb-4">
+                            <textarea placeholder="Nhập Ghi Chú" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" name="note"></textarea>
+                        </div>
+                        <div class="input-group input-group-static mb-4">
+                            <input id="txtAddress" placeholder="Nhập Địa Chỉ" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="" name="address">
+                        </div>
+                        <div class="input-group input-group-static mb-4">
+                            <input id="txtStaff" placeholder="Nhập Tên Người Giao" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="" name="staffName">
+                        </div>
+                        <div class="input-group input-group-static mb-4">
+                            <input type="date" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="" id="dateExport" name="time">
+                        </div>
+                        <div class="input-group input-group-static mb-4">
+                            <select id="pageSize" name="pageSize" class="form-control">
+                                <option value="10">Số dòng hiển thị</option>
+                                @for (int a = 15; a <= 100; a += 5)
+                                {
+                                    <option value="@a">@a</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <button id="btnSearch" type="submit" class="btn btn-icon btn-3 btn-outline-primary input-group-outline input-group-text">
+                        <span class="btn-inner--icon"><i class="material-icons">search</i></span>
+                        <span class="btn-inner--text">Tìm Kiếm</span>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" id="listFolder">
     @foreach (var item in Model)
     {
-        <div class="col-12 col-md-4 col-lg-2 mt-3">
-            <!-- Sửa ở đây -->
+        <div id="@item.code" class="select-card col-1col col-md-3col col-lg-5col mt-3">       
             <div class="card" onclick="GetImagesByDirectory(this)" data-code="@item.code">
                 <div class="card-header">
                     <p class="title-case" style="text-align: center;"><b>@item.NameCustomer</b></p>
-                    <p><b>Ngày: @item.Time.ToString("dd/MM/yyyy - HH:mm")</b> </p>
-                    <p><b>Người Gửi: @getNameUser(item.UserID)</b></p>
+                    <p><b><i class="material-icons align-middle">today</i> : @item.Time.ToString("dd/MM/yyyy - HH:mm")</b></p>
+                    <p><b><i class="material-icons align-middle">record_voice_over</i> : @getNameUser(item.UserID)</b></p>
                 </div>
                 <div class="bg-image hover-overlay rounded">
                     <img style="cursor: pointer;" src="@converURl(item.FirstImage)" class="w-100">
@@ -116,20 +210,34 @@
         </div>
     }
 </div>
-
-<div class="row mt-2">
+<div class="row mt-3">
     <div style="text-align:center">
         <div style="display:inline-block" id="listPaginationProduct">
-            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize }))
+            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize,customerName = ViewBag.customerName,staffName= ViewBag.staffName,address = ViewBag.address,note = ViewBag.noteReceiveBill, time = ViewBag.time }))
         </div>
     </div>
 </div>
 @section jsFooter{
     <script>
+        let isSelecting = false;
         $(document).ready(function () {
-            $("#sidenav-main").remove();
             addClasslist();
+            removeElement();
+            setAutoComplete();
+            handleBtn();
         });
+        function setAutoComplete() {
+            showSpinner()
+            $.get("/ReceiveBill/GetAutoComplete/", {}, function (data) {
+                AutoComplete(data.customers, $("#txtCustomer"));
+                AutoComplete(data.users, $("#txtStaff"));
+                hideSpinner();
+            });
+        }
+        function removeElement() {
+            $("#sidenav-main").remove();
+            $("#iconNavbarSidenav").remove();
+        }
         function encodeUrlSegment(segment) {
             return encodeURIComponent(segment);
         }
@@ -178,16 +286,167 @@
             document.getElementById('username').textContent = data.NameStaff;
             document.getElementById('created_date').textContent = data.Time
             document.getElementById('customername').textContent = location.customername;
+            $("#btnDelete").attr("data-spcode", data.Location[0].code);
         }
         function getlinkGoogle(latitude, longitude) {
             return "https://www.google.com/maps/place/" + latitude + "," + longitude;
         }
         function GetImagesByDirectory(element) {
-            showSpinner();
-            $.get("/ReceiveBill/GetImagesByDirectory/", { code: $(element).data("code") }, function (result) {
-                updateModal(result)
-                $('#detailModal').modal('show');
-                hideSpinner();
+            if (!isSelecting) {
+                showSpinner();
+                $.get("/ReceiveBill/GetImagesByDirectory/", { code: $(element).data("code") }, function (result) {
+                    updateModal(result)
+                    $('#detailModal').modal('show');
+                    hideSpinner();
+                });
+            }
+            else {
+                handleSelect(element);
+            }
+        }
+        function DeleteImageFolder(element) {
+            let code = $(element).attr('data-spcode');
+            let container = $("#" + code)
+            $.confirm({
+                title: 'Thông báo',
+                content: 'Bạn có chắc muốn xóa thư mục này và tất cả hình ảnh bên trong?',
+                buttons: {
+                    confirm:
+                    {
+                        text: 'Đồng ý',
+                        key: ['enter'],
+                        action: function () {
+                            $.post("/ReceiveBill/Delete/", { code: code }, function (result) {
+                                if (result.result) {
+                                    container.remove();
+                                    $("#detailModal").modal('hide')
+                                    var obj = $.alert({
+                                        title: 'Thông báo',
+                                        content: 'Xóa thành công',
+                                    });
+                                    setTimeout(function () {
+                                        obj.close();
+                                    }, 1500);
+                                    ReplaceItems();
+                                }
+                                else {
+                                    $.alert({
+                                        title: 'Thông Báo',
+                                        content: result.Message
+                                    })
+                                }
+
+                            });
+                        }
+                    },
+                    cancel: {
+                        text: 'Hủy',
+                        action: function () {
+                        }
+                    }
+                }
+            })
+        }
+        function ReplaceItems() {
+            var params = {
+                time: getParameterByName('time'),
+                customerName: getParameterByName('customerName'),
+                staffName: getParameterByName('staffName'),
+                note: getParameterByName('note'),
+                address: getParameterByName('address'),
+                page: getParameterByName('page') || 1,
+                pageSize: getParameterByName('pageSize') || 15
+            };
+            $.get("/ReceiveBill/GetNextData", params, function (response) {
+                if (response.success) {
+                    var newDiv = createNewDiv(response.data, response.nameStaff,response.time)
+                    $("#listFolder").append(newDiv);
+                }
+            });
+        }
+        function createNewDiv(data,nameStaff,time) {
+            let div = `<div id="${data.code}" class="col-1col col-md-3col col-lg-5col mt-3">
+                <div class="card" onclick="GetImagesByDirectory(this)" data-code="${data.code}">
+                   <div class="card-header">
+                        <p class="title-case" style="text-align: center;"><b>${data.NameCustomer}</b></p>
+                        <p><b><i class="material-icons align-middle">today</i> : ${time}</b></p>
+                        <p><b><i class="material-icons align-middle">record_voice_over</i> : ${nameStaff}</b></p>
+                        </div>
+                        <div class="bg-image hover-overlay rounded">
+                            <img style="cursor: pointer;" src="https://tantuanhoan.com/${data.FirstImage}" class="w-100">
+                        </div>
+                   </div>
+               </div>`;
+            return div;
+        }
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+        function handleSelect(element) {
+            if ($(element).hasClass('is-selected')) {
+                $(element).removeClass('is-selected')
+            } else {
+                $(element).addClass('is-selected')
+            }
+        }
+        function handleBtn() {
+            $("#selectDelete").on('click', function () {
+                isSelecting = true;
+                $("#btnCloseSelectMode").attr('hidden', false)
+                $("#btnDeleteMultiple").attr('hidden',false)
+            })
+            $("#btnCloseSelectMode").on('click', function () {
+                isSelecting = false;
+                $("#btnCloseSelectMode").attr('hidden', true)
+                $("#btnDeleteMultiple").attr('hidden', true)
+                removeSelected();
+            })
+            $("#btnDeleteMultiple").on('click', function () {
+                $.confirm({
+                    title: 'Thông báo',
+                    content: 'Bạn có chắc muốn xóa',
+                    buttons: {
+                        confirm: {
+                            text: 'Đồng ý',
+                            action: function () {
+                                var listSelected = $('.card.is-selected');
+                                var data = []
+                                listSelected.each(function (i, val) {
+                                    data.push($(val).data('code'));
+                                })
+                                $.post("/ReceiveBill/DeleteMultiple/", { listCode: data }, function (result) {
+                                    if (result) {
+                                        $("#btnCloseSelectMode").attr('hidden', true)
+                                        $("#btnDeleteMultiple").attr('hidden', true)
+                                        removeSelected();
+                                        listSelected.each(function (i, val) {
+                                            $("#" + $(val).data('code')).remove();
+                                        })
+                                    }
+                                    else {
+                                        $(result.Message);
+                                    }
+                                })
+                            }
+                        },
+                        cancel: {
+                            text: 'Hủy',
+                            action: function () {
+
+                            }
+                        }
+                    }
+                })
+            })
+        }
+        function removeSelected() {
+            $(".card.is-selected").each(function () {
+                $(this).removeClass('is-selected');
             });
         }
     </script>

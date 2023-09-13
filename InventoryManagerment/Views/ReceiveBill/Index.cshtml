@@ -87,6 +87,13 @@
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35); /* Giữ nguyên bóng mờ */
         border-color: #FF0000; /* Đặt màu viền là màu đỏ, giữ nguyên màu viền khi có class is-selected */
     }
+    .text-edit {
+        border: 1px solid #ccc;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        width:100%;
+    }
 </style>
 <div class="row">
     <div class="col">
@@ -131,6 +138,10 @@
                     <p class="title-case"><b>Ghi Chú:</b> <span id="note"></span></p>
                     <p class="title-case"><b>Địa Chỉ:</b> <span id="description"></span></p>
                     <a class="btn btn-icon btn-3 btn-success" href="#" target="_blank" id="linktoMap"><span class="btn-inner--icon"><i class="material-icons">map</i></span> <span class="btn-inner--text">Google Map</span></a>
+                    <input hidden multiple type="file" id="imageInput"/>
+                    <button hidden id="addImages" class="btn btn-icon btn-2 btn-primary" type="button">
+                        <span class="btn-inner--icon"><i class="material-icons">add_photo_alternate</i></span>
+                    </button>
                 </div>
 
                 <!-- Danh sách hình ảnh -->
@@ -139,7 +150,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn bg-gradient-info">Sửa</button>
+                <button hidden id="btnSaveEdit" type="button" class="btn bg-gradient-success">Lưu</button>
+                <button hidden id="btnCancelEdit" type="button" class="btn bg-gradient-danger">Hủy</button>
+                <button id="btnEdit" type="button" class="btn bg-gradient-info">Sửa</button>
                 <button id="btnDelete" type="button" data-spcode="" onclick="DeleteImageFolder(this)" class="btn bg-gradient-danger">Xóa</button>
                 <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
@@ -219,12 +232,55 @@
 </div>
 @section jsFooter{
     <script>
+        let selectedFiles = [];
         let isSelecting = false;
+        let isEditing = false;
+        let detail = {};
         $(document).ready(function () {
             addClasslist();
             removeElement();
             setAutoComplete();
             handleBtn();
+            $('#detailModal').on('hidden.bs.modal', function (e) {
+                toggleBtn('off')
+                selectedFiles = [];
+                $('.jconfirm').remove();
+            });
+            //Xử lý xóa hình ảnh
+            $('#imageContainer').on('click', 'img', function (event) {
+                var image = $(this).closest('div.img-container.mr-2');
+                if (isEditing) {
+                    event.preventDefault();
+                    $.confirm({
+                        title: 'Thông báo',
+                        content: 'Bạn có muốn xóa ảnh này?',
+                        buttons: {
+                            confirm: {
+                                text: 'Đồng ý',
+                                action: function () {
+                                    // Lấy giá trị data-index từ imgContainer
+                                    var index = parseInt(image.attr('data-index'));
+
+                                    // Xóa tệp tương ứng khỏi mảng selectedFiles
+                                    if (index >= 0 && index < selectedFiles.length) {
+                                        selectedFiles.splice(index, 1);
+                                    }
+
+                                    // Xóa hình ảnh khỏi giao diện
+                                    image.remove();
+                                }
+                            },
+                            cancel: {
+                                text: 'Hủy',
+                                action: function () {
+
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
         });
         function setAutoComplete() {
             showSpinner()
@@ -257,7 +313,6 @@
             // Xử lý danh sách hình ảnh
             var imageContainer = document.getElementById('imageContainer');
             imageContainer.innerHTML = ''; // Xóa nội dung cũ
-
             data.listImages.forEach(function (imagePath, index) {
                 var imageUrl = convertToFullUrl(imagePath);
 
@@ -273,11 +328,9 @@
 
                 var imgContainer = document.createElement('div');
                 imgContainer.classList.add('img-container', 'mr-2');
-                imgContainer.appendChild(imgElement);
-
+                imgContainer.appendChild(imgElement);              
                 imageContainer.appendChild(imgContainer);
             });
-
             // Xử lý thông tin vị trí
             var location = data.Location[0];
             $("#linktoMap").attr('href', getlinkGoogle(location.latitude, location.longitude))
@@ -394,11 +447,61 @@
                 $(element).addClass('is-selected')
             }
         }
+        function convertToDatetimeLocalFormat(dateTimeStr) {
+            // Tách chuỗi thành ngày và giờ
+            let [datePart, timePart] = dateTimeStr.split(' - ');
+
+            // Chuyển đổi định dạng ngày
+            let [day, month, year] = datePart.split('/');
+            let formattedDate = `${year}-${month}-${day}`;
+
+            // Kết hợp lại để tạo định dạng datetime-local
+            return `${formattedDate}T${timePart}`;
+        }
+        function convertToDisplayFormat(input) {
+            // Tách ngày và giờ từ chuỗi đầu vào
+            const [datePart, timePart] = input.split('T');
+
+            // Tách năm, tháng, ngày từ phần ngày
+            const [year, month, day] = datePart.split('-');
+
+            // Trả về chuỗi định dạng mong muốn
+            return `${day}/${month}/${year} - ${timePart}`;
+        }
+        function addAllImagesToSelectedFiles() {
+            // Lấy danh sách tất cả các URL hình ảnh từ #imageContainer
+            const imageUrls = $('#imageContainer .img-container a').map(function () {
+                return $(this).attr('href');
+            }).get();
+
+            // Chuyển đổi mỗi URL thành một Promise tải hình ảnh dưới dạng blob
+            const imagePromises = imageUrls.map(imgSrc => {
+                return fetch(imgSrc, { mode: 'no-cors' })
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const file = new File([blob], imgSrc.split('/').pop(), { type: blob.type });
+                        return file;
+                    });
+
+            });
+
+            // Khi tất cả các hình ảnh đã được tải và chuyển đổi thành đối tượng File
+            Promise.all(imagePromises).then(files => {
+                // Thêm tất cả các tệp vào mảng selectedFiles
+                selectedFiles.push(...files);
+
+                // Ở đây, bạn có thể tiếp tục thực hiện các hành động tiếp theo, ví dụ như gửi dữ liệu lên máy chủ
+                // Ví dụ: sendFilesToServer();
+            }).catch(error => {
+                console.error("Lỗi khi tải hình ảnh:", error);
+            });
+        }
+
         function handleBtn() {
             $("#selectDelete").on('click', function () {
                 isSelecting = true;
                 $("#btnCloseSelectMode").attr('hidden', false)
-                $("#btnDeleteMultiple").attr('hidden',false)
+                $("#btnDeleteMultiple").attr('hidden', false)
             })
             $("#btnCloseSelectMode").on('click', function () {
                 isSelecting = false;
@@ -443,11 +546,165 @@
                     }
                 })
             })
+            $("#btnEdit").click(function () {
+                showEditor(this);
+            })
+            $("#btnCancelEdit").click(function () {
+                showEditor(this);
+                $("#imageContainer .new-images").parent().parent().remove();
+            });
+            $("#btnSaveEdit").click(function () {
+                saveEdit();
+            })
+            $("#addImages").click(function () {
+                // Kích hoạt input file để chọn ảnh
+                $("input[type='file']").trigger('click');
+            });
+            $('#imageInput').on('change', function () {
+                var imageContainer = $('#imageContainer');
+
+                for (var i = 0; i < this.files.length; i++) {
+                    var file = this.files[i];
+
+                    var reader = new FileReader();
+                    reader.onload = (function (file) {
+                        return function (e) {
+                            var imgContainer = $('<div class="img-container mr-2"></div>');
+                            var link = $('<a></a>')
+                                .attr('href', e.target.result)
+                                .attr('data-fancybox', 'gallery');
+
+                            var img = $('<img>')
+                                .attr('src', e.target.result)
+                                .addClass('img-fluid mb-3 square-image');
+
+                            link.append(img);
+                            imgContainer.append(link);
+                            imageContainer.append(imgContainer);
+
+                            // Lưu trữ tệp hình ảnh được chọn trong biến selectedFiles
+                            selectedFiles.push(file);
+
+                            // Thêm thuộc tính data-index cho imgContainer
+                            imgContainer.attr('data-index', selectedFiles.length - 1);
+                        };
+                    })(file);
+
+                    reader.readAsDataURL(file);
+                }
+            });
+
         }
         function removeSelected() {
             $(".card.is-selected").each(function () {
                 $(this).removeClass('is-selected');
             });
+        }
+        function replaceElement(element, content) {
+            $(element).html('');
+            $(element).html(content);
+        }
+        function showEditor(element) {
+            const customername = $("#customername").html();
+            const time = convertToDatetimeLocalFormat($("#created_date").html());
+            const staff = $("#username").html();
+            const note = $("#note").html();
+            const address = $("#description").html();
+            if ($(element).attr('id') == 'btnEdit') {
+                detail.customername = customername;
+                detail.time = time;
+                detail.staff = staff;
+                detail.note = note;
+                detail.address = address;
+                const editCustomerName = `<p><b>Tên Khách Hàng:</b> <span><input value="${customername}" class="text-edit" id="editCustomerName" type="text"></span></p>`;
+                const editTime = `<input value="${time}" id="editTime" class="text-edit" type="datetime-local" />`;
+                const editStaff = `<input value="${staff}" class="text-edit" id = "editStaff" type = "text" />`;
+                const editNote = `<textarea id="editNote" class="text-edit" rows="2">${note}</textarea>`;
+                const editAddress = `<input value="${address}" id="editAddress" class="text-edit" type="text" />`;
+                replaceElement($("#customername"), editCustomerName);
+                replaceElement($('#created_date'), editTime);
+                replaceElement($('#username'), editStaff);
+                replaceElement($('#note'), editNote);
+                replaceElement($('#description'), editAddress);
+                toggleBtn('on');
+            }
+            else {
+                $('#customername').html(detail.customername)
+                $('#created_date').html(convertToDisplayFormat(detail.time))
+                $('#username').html(detail.staff)
+                $('#note').html(detail.note)
+                $('#description').html(detail.address)
+                toggleBtn('off');
+            }
+
+        }
+        function toggleBtn(condition) {
+            if (condition == 'on') {
+                $("#btnSaveEdit").attr('hidden', false);
+                $("#btnCancelEdit").attr('hidden', false);
+                $("#btnDelete").attr('hidden', true);
+                $("#btnEdit").attr('hidden', true)
+                $("#addImages").attr('hidden', false)
+                isEditing = true;
+            }
+            else {
+                $("#btnSaveEdit").attr('hidden', true);
+                $("#btnCancelEdit").attr('hidden', true);
+                $("#btnDelete").attr('hidden', false);
+                $("#btnEdit").attr('hidden', false);
+                $("#addImages").attr('hidden', true);
+                isEditing = false;
+            }
+        }
+        function saveEdit() {
+            let nameCustomer = $("#editCustomerName").val();
+            let time = $("#editTime").val();
+            let staff = $("#editStaff").val();
+            let note = $("#editNote").val();
+            let address = $("#editAddress").val();
+            let infoEdit = {
+                Customer: nameCustomer,
+                Time: time,
+                Staff: staff,
+                Note: note,
+                Address: address
+            }
+
+            addAllImagesToSelectedFiles();
+
+            // Thu thập dữ liệu từ các trường nhập liệu và thêm vào formData
+
+            setTimeout(function () {
+                var formData = new FormData();
+                for (var i = 0; i < selectedFiles.length; i++) {
+                    formData.append('files', selectedFiles[i]);
+                }
+                formData.append('time', infoEdit.Time);
+                formData.append('customerName', infoEdit.Customer);
+                formData.append('staff', infoEdit.Staff);
+                formData.append('note', infoEdit.Note);
+                formData.append('address', infoEdit.Address);
+                formData.append('code', $("#btnDelete").attr('data-spcode'))
+                $.ajax({
+                    url: '/ReceiveBill/EditReceiveBill/',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (data) {
+                        console.log(data);
+                    },
+                    error: function (error) {
+                        console.error(error);
+                    }
+                });
+            }, 1000);
+            $('#customername').html(detail.customername)
+            $('#created_date').html(convertToDisplayFormat(detail.time))
+            $('#username').html(detail.staff)
+            $('#note').html(detail.note)
+            $('#description').html(detail.address)
+            toggleBtn('off');
         }
     </script>
 }

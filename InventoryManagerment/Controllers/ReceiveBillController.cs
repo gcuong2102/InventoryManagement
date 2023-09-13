@@ -142,5 +142,72 @@ namespace InventoryManagerment.Controllers
             var result = new DataAccess().DeleteMultipleFolder(listCode);
             return Json(result, JsonRequestBehavior.AllowGet);
         }
+        [HttpPost]
+        public JsonResult EditReceiveBill(IEnumerable<HttpPostedFileBase> files, string code, string time, string customername, string address, string note, string staff)
+        {
+            string getUrl = new DataAccess().GetUrlByCode(code);
+            List<string> newImageUrls = new List<string>();
+
+            try
+            {
+                string folderName = Path.GetDirectoryName(getUrl).TrimStart('\\');
+                string folderPath = Path.Combine(@"\\103.116.105.192\", folderName);
+
+                // Xóa tất cả các tệp trong thư mục
+                foreach (string file in Directory.GetFiles(folderPath))
+                {
+                    System.IO.File.Delete(file);
+                }
+
+                // Thêm các hình ảnh mới vào thư mục
+                foreach (var file in files)
+                {
+                    if (file != null && file.ContentLength > 0)
+                    {
+                        var fileName = customername.Trim() + Functions.GenerateUniqueCode();
+                        if (Path.GetExtension(file.FileName).ToLower() != ".webp")
+                        {
+                            // Nén và chuyển đổi sang định dạng .webp
+                            using (var imageStream = new MemoryStream())
+                            {
+                                file.InputStream.CopyTo(imageStream);
+                                imageStream.Position = 0;
+                                using (var image = new MagickImage(imageStream))
+                                {
+                                    image.AutoOrient();
+                                    image.Format = MagickFormat.WebP;
+                                    image.Quality = 78;
+                                    fileName += ".webp";
+                                    var path = Path.Combine(folderPath, fileName);
+                                    image.Write(path);
+                                    newImageUrls.Add(path);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Lưu tệp mà không cần nén
+                            fileName += ".webp";
+                            var path = Path.Combine(folderPath, fileName);
+                            using (var fileStream = new FileStream(path, FileMode.Create))
+                            {
+                                file.InputStream.CopyTo(fileStream);
+                            }
+                            newImageUrls.Add(path);
+                        }
+                    }
+                }
+                new DataAccess().UpdateFolderImages(newImageUrls, code, time, customername, staff, note, address);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+
+            // Bạn có thể sử dụng newImageUrls để cập nhật vào cơ sở dữ liệu tại đây          
+
+            return Json(new { success = true, imageUrls = newImageUrls }, JsonRequestBehavior.AllowGet);
+        }
+
     }
 }

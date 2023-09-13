@@ -3348,7 +3348,6 @@ namespace InventoryManagerment
                 nameStaff = db.Users.Find(replacementData.Last().UserID).Name.ToString(),
             };
         }
-
         public object DeleteMultipleFolder(List<string> codes)
         {
             try
@@ -3372,6 +3371,37 @@ namespace InventoryManagerment
                 };
             }
             
+        }
+
+        public void UpdateFolderImages(List<string> listUrl,string code, string time, string customername, string staff, string note, string address)
+        {
+            var listReceiveBill = db.ReceiveBill.Where(x => x.Code == code).ToList();
+            var userID = db.Users.Where(x => x.Name == staff).FirstOrDefault().ID;
+            foreach(var item in listReceiveBill)
+            {
+                db.ReceiveBill.Remove(item);
+            }
+            foreach(var item in listUrl)
+            {
+                var receive = new ReceiveBill()
+                {
+                    Code = code,
+                    Time = Convert.ToDateTime(time),
+                    CustomerName = customername,
+                    Note = note,
+                    Url_Image = item,
+                    UserID = userID,
+                };
+                db.ReceiveBill.Add(receive);
+            }
+            var location = db.Location.Where(x => x.code == code).FirstOrDefault();
+            location.description = address;
+            db.SaveChanges();
+        }
+
+        public string GetUrlByCode(string code)
+        {
+            return db.ReceiveBill.Where(x => x.Code == code).FirstOrDefault().Url_Image;
         }
     }
 }

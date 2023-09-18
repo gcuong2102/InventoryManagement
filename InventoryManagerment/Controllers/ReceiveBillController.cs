@@ -9,6 +9,10 @@ using System.Runtime.Remoting.Messaging;
 using System.Web;
 using System.Web.Mvc;
 using ImageMagick;
+using MySqlX.XDevAPI.Common;
+using InventoryManagerment.Models.EF;
+using System.Web.Services.Description;
+using InventoryManagerment.Models.WINFORMS;
 
 namespace InventoryManagerment.Controllers
 {
@@ -143,71 +147,88 @@ namespace InventoryManagerment.Controllers
             return Json(result, JsonRequestBehavior.AllowGet);
         }
         [HttpPost]
-        public JsonResult EditReceiveBill(IEnumerable<HttpPostedFileBase> files, string code, string time, string customername, string address, string note, string staff)
+        public JsonResult EditReceiveBill(IEnumerable<HttpPostedFileBase> files,string folderName, string code, string time, string customername, string address, string note, string staff)
         {
-            string getUrl = new DataAccess().GetUrlByCode(code);
-            List<string> newImageUrls = new List<string>();
-
             try
             {
-                string folderName = Path.GetDirectoryName(getUrl).TrimStart('\\');
-                string folderPath = Path.Combine(@"\\103.116.105.192\", folderName);
-
-                // Xóa tất cả các tệp trong thư mục
-                foreach (string file in Directory.GetFiles(folderPath))
+                if (files != null)
                 {
-                    System.IO.File.Delete(file);
-                }
-
-                // Thêm các hình ảnh mới vào thư mục
-                foreach (var file in files)
-                {
-                    if (file != null && file.ContentLength > 0)
+                    var listUrl = new List<string>();
+                    foreach (var file in files)
                     {
-                        var fileName = customername.Trim() + Functions.GenerateUniqueCode();
-                        if (Path.GetExtension(file.FileName).ToLower() != ".webp")
+                        if (file != null && file.ContentLength > 0)
                         {
-                            // Nén và chuyển đổi sang định dạng .webp
+                            var fileName = customername.Trim() + Functions.GenerateUniqueCode() + ".webp"; // Lưu với đuôi .webp
+                            var path = Path.Combine(@"\\103.116.105.192" + folderName, fileName); // Lưu vào thư mục duy nhất
+
                             using (var imageStream = new MemoryStream())
                             {
                                 file.InputStream.CopyTo(imageStream);
                                 imageStream.Position = 0;
                                 using (var image = new MagickImage(imageStream))
                                 {
-                                    image.AutoOrient();
+                                    image.AutoOrient(); // Tự động xoay hình ảnh dựa trên thông tin EXIF
                                     image.Format = MagickFormat.WebP;
                                     image.Quality = 78;
-                                    fileName += ".webp";
-                                    var path = Path.Combine(folderPath, fileName);
                                     image.Write(path);
-                                    newImageUrls.Add(path);
                                 }
                             }
-                        }
-                        else
-                        {
-                            // Lưu tệp mà không cần nén
-                            fileName += ".webp";
-                            var path = Path.Combine(folderPath, fileName);
-                            using (var fileStream = new FileStream(path, FileMode.Create))
-                            {
-                                file.InputStream.CopyTo(fileStream);
-                            }
-                            newImageUrls.Add(path);
+                            listUrl.Add(path);
                         }
                     }
+                    new DataAccess().UpdateImages(listUrl, code, time, customername, note, staff, address);             
                 }
-                new DataAccess().UpdateFolderImages(newImageUrls, code, time, customername, staff, note, address);
+                else
+                {
+                    new DataAccess().UpdateInformationReceiveBill(code, time, customername, staff, note, address);
+                }
+                return Json(true, JsonRequestBehavior.AllowGet);
             }
-            catch (Exception ex)
+            catch
             {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(false, JsonRequestBehavior.AllowGet);
             }
-
-            // Bạn có thể sử dụng newImageUrls để cập nhật vào cơ sở dữ liệu tại đây          
-
-            return Json(new { success = true, imageUrls = newImageUrls }, JsonRequestBehavior.AllowGet);
+            
         }
+        [HttpPost]
+        public JsonResult DeleteImage(string fileName, string code)
+        {
 
+            var db = new InventoryDbContext();
+            string namePic = HttpUtility.UrlDecode(fileName);
+            var result = db.ReceiveBill.Where(x => x.Code == code && x.Url_Image.Contains(namePic)).FirstOrDefault();
+            if(result == null)
+            {
+                return Json(new { result = false, message = "Không tìm thấy ảnh này" });
+            }
+            string basePath = @"\\103.116.105.192";
+            System.IO.File.Delete(basePath+result.Url_Image);
+            db.ReceiveBill.Remove(result);
+            db.SaveChanges();
+            return Json(new {result = true, message = "Xóa ảnh thành công"}, JsonRequestBehavior.AllowGet);
+        }
+        [HttpGet]
+        public JsonResult CheckNameStaff(string nameStaff)
+        {
+            var db = new InventoryDbContext();
+            var staff = db.Users.Where(x => x.Name == nameStaff).FirstOrDefault();
+            if (staff == null)
+            {
+                return Json(new { result = false, message = "Không tồn tại tên nhân viên này, vui lòng kiểm tra lại" },JsonRequestBehavior.AllowGet);
+            }
+            else
+            {
+                return Json(new { result = true, message = "" }, JsonRequestBehavior.AllowGet);
+            }
+        }
+        [HttpGet]
+        public JsonResult GetNameStaffCustomer()
+        {
+            var db = new InventoryDbContext();
+            var staff = db.Users.Select(x => x.Name).ToList();
+            var customer = new DataAccess2().GetNameCustomer();
+            return Json(new { staff = staff, customer = customer },JsonRequestBehavior.AllowGet);
+
+        }
     }
 }

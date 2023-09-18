@@ -18,6 +18,7 @@ using System.Web.Services.Description;
 using ImageMagick;
 using System.Drawing.Printing;
 using System.Web.UI;
+using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
 
 namespace InventoryManagerment
 {
@@ -3005,35 +3006,7 @@ namespace InventoryManagerment
             {
                 return false;
             }
-        }
-        //public IEnumerable<DirectoryImage> GetDataReceiveBill(DateTime? time, string customerName, string staffName, string note, string address,int page, int pageSize)
-        //{
-        //    if (!db.ReceiveBill.Any())
-        //    {
-        //        return new List<DirectoryImage>{  new DirectoryImage() }.ToPagedList(page, pageSize);
-        //    }
-
-        //    var groupedData = db.ReceiveBill
-        //                        .GroupBy(r => r.Code) // Nhóm theo mã Code
-        //                        .ToList() // Thực thi truy vấn tại đây
-        //                        .Select(g =>
-        //                        {
-        //                            var firstItem = g.OrderBy(r => r.Time).FirstOrDefault();
-        //                            return new DirectoryImage
-        //                            {
-        //                                DirectoryName = g.Key,
-        //                                FirstImage = firstItem?.Url_Image,
-        //                                UserID = firstItem?.UserID ?? 0,
-        //                                Time = firstItem?.Time ?? DateTime.MinValue,
-        //                                NameCustomer = firstItem?.CustomerName,
-        //                                code = firstItem?.Code
-        //                            };
-        //                        })
-        //                        .OrderByDescending(d => d.DirectoryName)
-        //                        .ToPagedList(page, pageSize);
-
-        //    return groupedData;
-        //}
+        }    
         public IEnumerable<DirectoryImage> GetDataReceiveBill(DateTime? time, string customerName, string staffName, string note, string address, int page, int pageSize)
         {
             if (!db.ReceiveBill.Any())
@@ -3372,36 +3345,70 @@ namespace InventoryManagerment
             }
             
         }
-
-        public void UpdateFolderImages(List<string> listUrl,string code, string time, string customername, string staff, string note, string address)
+        public void UpdateInformationReceiveBill(string code, string time, string customername, string staff, string note, string address)
         {
-            var listReceiveBill = db.ReceiveBill.Where(x => x.Code == code).ToList();
-            var userID = db.Users.Where(x => x.Name == staff).FirstOrDefault().ID;
-            foreach(var item in listReceiveBill)
-            {
-                db.ReceiveBill.Remove(item);
-            }
-            foreach(var item in listUrl)
-            {
-                var receive = new ReceiveBill()
-                {
-                    Code = code,
-                    Time = Convert.ToDateTime(time),
-                    CustomerName = customername,
-                    Note = note,
-                    Url_Image = item,
-                    UserID = userID,
-                };
-                db.ReceiveBill.Add(receive);
-            }
+            var receivebill = db.ReceiveBill.Where(x => x.Code == code).ToList();
             var location = db.Location.Where(x => x.code == code).FirstOrDefault();
+            var userID = db.Users.Where(x => x.Name == staff).FirstOrDefault().ID;
+            foreach(var item in receivebill)
+            {
+                item.Note = note;
+                item.Time = DateTime.Parse(time);
+                item.CustomerName = customername;
+                item.UserID = userID;
+            }
             location.description = address;
+            location.customername = customername;
             db.SaveChanges();
         }
-
         public string GetUrlByCode(string code)
         {
             return db.ReceiveBill.Where(x => x.Code == code).FirstOrDefault().Url_Image;
+        }
+        public void UpdateImages(List<string> listUrl,string code, string time, string customername, string note, string staff, string address)
+        {
+            try
+            {
+                var userid = db.Users.Where(x => x.Name == staff).FirstOrDefault().ID;
+                var username = db.Users.Where(x => x.Name == staff).FirstOrDefault().UserName;
+                foreach (var url in listUrl)
+                {
+                    // Chỉnh sửa đường dẫn để chỉ lưu phần tương đối
+                    var relativePath = url.Replace(@"\\103.116.105.192", "");
+
+                    var obj = new ReceiveBill()
+                    {
+                        CustomerName = customername,
+                        Time = DateTime.Parse(time),
+                        Note = note,
+                        Url_Image = relativePath, // Sử dụng đường dẫn tương đối ở đây
+                        UserID = userid,
+                        Code = code,
+                    };
+                    db.ReceiveBill.Add(obj);
+                }
+                var listbill = db.ReceiveBill.Where(x => x.Code == code).ToList();
+                if (listbill != null)
+                {
+                    foreach (var item in listbill)
+                    {
+                        item.Note = note;
+                        item.Time = DateTime.Parse(time);
+                        item.UserID = userid;
+                        item.CustomerName = customername;
+                    }
+                }               
+                var location = db.Location.Where(x => x.code == code).First();
+                location.customername = customername;
+                location.created_date = DateTime.Parse(time);
+                location.description = address;
+                location.username = username;
+                db.SaveChanges();           
+            }
+            catch
+            {
+               
+            }
         }
     }
 }

@@ -236,6 +236,7 @@
         let isSelecting = false;
         let isEditing = false;
         let detail = {};
+        let urlImage = '';
         $(document).ready(function () {
             addClasslist();
             removeElement();
@@ -247,41 +248,81 @@
                 $('.jconfirm').remove();
             });
             //Xử lý xóa hình ảnh
-            $('#imageContainer').on('click', 'img', function (event) {
-                var image = $(this).closest('div.img-container.mr-2');
+            $('#imageContainer').on('click', 'img', function (event) {             
+                var image_container = $(this).closest('div.img-container.mr-2');
+                var image = image_container.find('img');
+
                 if (isEditing) {
                     event.preventDefault();
-                    $.confirm({
-                        title: 'Thông báo',
-                        content: 'Bạn có muốn xóa ảnh này?',
-                        buttons: {
-                            confirm: {
-                                text: 'Đồng ý',
-                                action: function () {
-                                    // Lấy giá trị data-index từ imgContainer
-                                    var index = parseInt(image.attr('data-index'));
+                    if (parseInt($('#imageContainer div.img-container').length) == 1) {
+                        $.alert('Phải có duy nhất 1 ảnh');
+                        return;
+                    }
+                    if ($(image).hasClass('new-images')) {
+                        $.confirm({
+                            title: 'Thông báo',
+                            content: 'Bạn có muốn xóa ảnh này?',
+                            buttons: {
+                                confirm: {
+                                    text: 'Đồng ý',
+                                    action: function () {
+                                        // Lấy giá trị data-index từ imgContainer
+                                        var index = parseInt(image.attr('data-index'));
 
-                                    // Xóa tệp tương ứng khỏi mảng selectedFiles
-                                    if (index >= 0 && index < selectedFiles.length) {
-                                        selectedFiles.splice(index, 1);
+                                        // Xóa tệp tương ứng khỏi mảng selectedFiles
+                                        if (index >= 0 && index < selectedFiles.length) {
+                                            selectedFiles.splice(index, 1);
+                                        }
+
+                                        // Xóa hình ảnh khỏi giao diện
+                                        image_container.remove();
                                     }
+                                },
+                                cancel: {
+                                    text: 'Hủy',
+                                    action: function () {
 
-                                    // Xóa hình ảnh khỏi giao diện
-                                    image.remove();
-                                }
-                            },
-                            cancel: {
-                                text: 'Hủy',
-                                action: function () {
-
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
+                    else {
+                        $.confirm({
+                            title: 'Thông báo',
+                            content: 'Bạn có muốn xóa vĩnh viễn ảnh này?',
+                            buttons: {
+                                confirm: {
+                                    text: 'Đồng ý',
+                                    action: function () {
+                                        showSpinner();
+                                        var folderName = $(image).attr('src');
+                                        var fileName = extractFileNameFromUrl($(image).attr('src'))
+                                        var code = $("#btnDelete").attr("data-spcode");
+                                        $.post('/ReceiveBill/DeleteImage/', { fileName: fileName, code: code }, function (data) {
+                                            if (data.result) {
+                                                image_container.remove();
+                                                $.alert(data.message, 'Thông báo')
+                                            }
+                                            else {
+                                                $.alert(data.message, 'Thông báo')
+                                            }
+                                            hideSpinner();
+                                        });                                     
+                                    }
+                                },
+                                cancel: {
+                                    text: 'Hủy',
+                                    action: function () {
+
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
             });
-
-        });
+        })
         function setAutoComplete() {
             showSpinner()
             $.get("/ReceiveBill/GetAutoComplete/", {}, function (data) {
@@ -314,16 +355,14 @@
             var imageContainer = document.getElementById('imageContainer');
             imageContainer.innerHTML = ''; // Xóa nội dung cũ
             data.listImages.forEach(function (imagePath, index) {
+                urlImage = extractPathFromUrl(imagePath);
                 var imageUrl = convertToFullUrl(imagePath);
-
                 var imgElement = document.createElement('a'); // Thay đổi từ 'img' sang 'a'
                 imgElement.href = imageUrl; // Đặt thuộc tính href cho thẻ a
                 imgElement.setAttribute('data-fancybox', 'gallery'); // Thêm thuộc tính này để fancybox biết đây là một mục
-
                 var imgThumbnail = document.createElement('img'); // Tạo một thẻ img để hiển thị hình ảnh thu nhỏ
                 imgThumbnail.src = imageUrl;
                 imgThumbnail.classList.add('img-fluid', 'mb-3', 'square-image');
-
                 imgElement.appendChild(imgThumbnail); // Thêm hình ảnh thu nhỏ vào thẻ a
 
                 var imgContainer = document.createElement('div');
@@ -468,35 +507,6 @@
             // Trả về chuỗi định dạng mong muốn
             return `${day}/${month}/${year} - ${timePart}`;
         }
-        function addAllImagesToSelectedFiles() {
-            // Lấy danh sách tất cả các URL hình ảnh từ #imageContainer
-            const imageUrls = $('#imageContainer .img-container a').map(function () {
-                return $(this).attr('href');
-            }).get();
-
-            // Chuyển đổi mỗi URL thành một Promise tải hình ảnh dưới dạng blob
-            const imagePromises = imageUrls.map(imgSrc => {
-                return fetch(imgSrc, { mode: 'no-cors' })
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const file = new File([blob], imgSrc.split('/').pop(), { type: blob.type });
-                        return file;
-                    });
-
-            });
-
-            // Khi tất cả các hình ảnh đã được tải và chuyển đổi thành đối tượng File
-            Promise.all(imagePromises).then(files => {
-                // Thêm tất cả các tệp vào mảng selectedFiles
-                selectedFiles.push(...files);
-
-                // Ở đây, bạn có thể tiếp tục thực hiện các hành động tiếp theo, ví dụ như gửi dữ liệu lên máy chủ
-                // Ví dụ: sendFilesToServer();
-            }).catch(error => {
-                console.error("Lỗi khi tải hình ảnh:", error);
-            });
-        }
-
         function handleBtn() {
             $("#selectDelete").on('click', function () {
                 isSelecting = true;
@@ -576,7 +586,7 @@
 
                             var img = $('<img>')
                                 .attr('src', e.target.result)
-                                .addClass('img-fluid mb-3 square-image');
+                                .addClass('img-fluid mb-3 square-image new-images');
 
                             link.append(img);
                             imgContainer.append(link);
@@ -626,6 +636,10 @@
                 replaceElement($('#username'), editStaff);
                 replaceElement($('#note'), editNote);
                 replaceElement($('#description'), editAddress);
+                $.get("/ReceiveBill/GetNameStaffCustomer", {}, function (result) {
+                    AutoComplete(result.staff, $("#editStaff"))
+                    AutoComplete(result.customer, $("#editCustomerName"));
+                })
                 toggleBtn('on');
             }
             else {
@@ -657,6 +671,7 @@
             }
         }
         function saveEdit() {
+            showSpinner();
             let nameCustomer = $("#editCustomerName").val();
             let time = $("#editTime").val();
             let staff = $("#editStaff").val();
@@ -669,36 +684,76 @@
                 Note: note,
                 Address: address
             }
-
-            addAllImagesToSelectedFiles();
-
-            // Thu thập dữ liệu từ các trường nhập liệu và thêm vào formData
-
-            setTimeout(function () {
-                var formData = new FormData();
-                for (var i = 0; i < selectedFiles.length; i++) {
-                    formData.append('files', selectedFiles[i]);
-                }
-                formData.append('time', infoEdit.Time);
-                formData.append('customerName', infoEdit.Customer);
-                formData.append('staff', infoEdit.Staff);
-                formData.append('note', infoEdit.Note);
-                formData.append('address', infoEdit.Address);
-                formData.append('code', $("#btnDelete").attr('data-spcode'))
-                $.ajax({
-                    url: '/ReceiveBill/EditReceiveBill/',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (data) {
-                        console.log(data);
-                    },
-                    error: function (error) {
-                        console.error(error);
+            if (infoEdit.Customer.length == 0 || infoEdit.Customer.Staff == 0 || infoEdit.Customer.Address == 0) {
+                $.alert('Vui lòng nhập đầy đủ thông tin', 'Thông báo')
+                hideSpinner();
+                return;
+            } else {
+                $.get("/ReceiveBill/CheckNameStaff", { nameStaff: infoEdit.Staff }, function (data) {
+                    if (!data.result) {
+                        $.alert(data.message, 'Thông báo');
+                        hideSpinner()
+                        return;
+                    } else {
+                        var formData = new FormData();
+                        $.each(selectedFiles, function (i, v) {
+                            formData.append('files', v);
+                        });
+                        formData.append('time', infoEdit.Time);
+                        formData.append('customerName', infoEdit.Customer);
+                        formData.append('staff', infoEdit.Staff);
+                        formData.append('note', infoEdit.Note);
+                        formData.append('address', infoEdit.Address);
+                        formData.append('code', $("#btnDelete").attr('data-spcode'))
+                        formData.append('folderName', urlImage)
+                        $.ajax({
+                            url: '/ReceiveBill/EditReceiveBill/',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function (data) {
+                                $.get("/ReceiveBill/GetImagesByDirectory/", { code: $("#btnDelete").attr('data-spcode') }, function (result) {
+                                    updateModal(result)
+                                    $('#detailModal').modal('show');
+                                });
+                                afterSave();
+                                selectedFiles = [];
+                                $.alert('Cập nhật thành công', 'Thông Báo')
+                                hideSpinner();
+                            },
+                            error: function (error) {
+                                console.error(error);
+                            }
+                        });
                     }
-                });
-            }, 1000);
+                })
+                
+            }
+            
+        }
+        function extractPathFromUrl(url) {
+            // Thay thế tất cả dấu "\" bằng dấu "/"
+            url = url.replace(/\\/g, '/');
+
+            // Sử dụng phương thức split() để tách URL bằng dấu '/'
+            var parts = url.split('/');
+
+            // Trích xuất phần bạn quan tâm
+            var extractedPath = '/' + parts[1] + '/' + parts[2];
+
+            return extractedPath;
+        }
+        function extractFileNameFromUrl(url) {
+            // Tách URL thành các phần bằng '/'
+            var parts = url.split('/');
+
+            // Lấy phần cuối cùng của mảng, đó chính là tên tệp
+            var fileName = parts[parts.length - 1];
+
+            return fileName;
+        }
+        function afterSave() {
             $('#customername').html(detail.customername)
             $('#created_date').html(convertToDisplayFormat(detail.time))
             $('#username').html(detail.staff)

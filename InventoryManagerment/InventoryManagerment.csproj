@@ -185,6 +185,7 @@
     <Content Include="Assets\img\bg-smart-home-1.jpg" />
     <Content Include="Assets\img\bg-smart-home-2.jpg" />
     <Content Include="Assets\img\bruce-mars.jpg" />
+    <Content Include="Assets\img\delivery.png" />
     <Content Include="Assets\img\down-arrow-dark.svg" />
     <Content Include="Assets\img\down-arrow-white.svg" />
     <Content Include="Assets\img\down-arrow.svg" />

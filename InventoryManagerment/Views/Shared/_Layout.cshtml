@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=0">
-    <link rel="apple-touch-icon" sizes="76x76" href="~/assets/img/apple-icon.png">
-    <link rel="icon" type="image/png" href="~/assets/img/favicon.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="~/assets/img/delivery.png">
+    <link rel="icon" type="image/png" href="~/assets/img/delivery.png">
     <title>
         @ViewBag.Title
     </title>
@@ -162,7 +162,7 @@
             });
         }
         function addClasslist() {
-            if ($('#listPaginationProduct')) {
+            if ($('#listPaginationProduct').length) {
                 $('#listPaginationProduct ul li').each(function () {
                     $(this).addClass('page-item');
                     $(this).find('a').addClass('page-link')

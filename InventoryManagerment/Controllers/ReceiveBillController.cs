@@ -22,9 +22,18 @@ namespace InventoryManagerment.Controllers
         [HttpGet]
         public ActionResult Index(DateTime? time,string customerName, string staffName, string note, string address ,int page = 1, int pageSize = 15)
         {
-            SetViewBag(time, customerName, staffName, note, address, pageSize);
-            var model = new DataAccess().GetDataReceiveBill(time,customerName,staffName,note,address,page,pageSize);
-            return View(model);
+            var user = GetUser();
+            if(user.RoleID == 1)
+            {
+                SetViewBag(time, customerName, staffName, note, address, pageSize);
+                var model = new DataAccess().GetDataReceiveBill(time, customerName, staffName, note, address, page, pageSize);
+                return View(model);
+            }
+            else
+            {
+                return RedirectToAction("Index", "Error");
+            }
+            
         }
         public void SetViewBag(DateTime? time, string customerName, string staffName, string note, string address, int pageSize)
         {

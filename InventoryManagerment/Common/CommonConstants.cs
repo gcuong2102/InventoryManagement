@@ -14,5 +14,6 @@ namespace InventoryManagerment.Common
         public static string NAME_USER = "NAME_USER";
         public static string ROLE_ID = "ROLEID";
         public static string User_ID = "USER_ID";
+        public static string URL_DATA = "URL_DATA";
     }
 }

@@ -18,6 +18,7 @@ namespace InventoryManagerment.Controllers
             //kiem tra session da ghi thong tin user login chua
             if (cookie == null)
             {
+                Session[Common.CommonConstants.URL_DATA] = Request.Url.ToString();
                 filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index"}));
             }
             else

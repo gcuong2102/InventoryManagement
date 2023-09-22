@@ -25,14 +25,18 @@ namespace InventoryManagerment.Controllers
                 {
                     HttpCookie userCookie = new HttpCookie(Common.CommonConstants.USER_DATA);
                     var user = functions.GetUser(model.UserName);
-                    /*Session.Add(CommonConstants.USER_SESSION, user);
-                    Session.Timeout = 1440;*/
                     userCookie[Common.CommonConstants.USER_NAME] = user.UserName;
                     userCookie[Common.CommonConstants.NAME_USER] = user.Name;
                     userCookie[Common.CommonConstants.ROLE_ID] = user.RoleID.ToString();
                     userCookie[CommonConstants.User_ID] = user.ID.ToString();
                     userCookie.Expires = DateTime.Now.AddMonths(1);
                     Response.Cookies.Add(userCookie);
+                    if (Session[Common.CommonConstants.URL_DATA] != null)
+                    {
+                        string url = Session[Common.CommonConstants.URL_DATA].ToString();
+                        Session[Common.CommonConstants.URL_DATA] = null;
+                        return Redirect(url);
+                    }
                     return RedirectToAction("Index", "Home");
                 }
                 else if (result == 0)

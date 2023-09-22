@@ -17,6 +17,7 @@ namespace InventoryManagerment.Controllers
             var cookie = Request.Cookies[Common.CommonConstants.USER_DATA];
             if (cookie == null)
             {
+                Session[Common.CommonConstants.URL_DATA] = Request.Url.ToString();
                 filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index" }));
             }
             else if(cookie != null)
@@ -24,6 +25,7 @@ namespace InventoryManagerment.Controllers
                 var result = new DataAccess().CheckUserName(cookie[Common.CommonConstants.USER_NAME]);
                 if (!result)
                 {
+                    Session[Common.CommonConstants.URL_DATA] = Request.Url.ToString();
                     cookie.Expires = DateTime.Now.AddDays(-1);
                     Response.Cookies.Add(cookie);
                     filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index" }));

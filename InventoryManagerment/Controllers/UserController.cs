@@ -37,11 +37,11 @@ namespace InventoryManagerment.Controllers
             if (result)
             {
                 ModelState.Clear();
-                SetAlert("Thêm người dùng thành công", "success");               
+                ModelState.AddModelError("","Thêm người dùng thành công");               
             }
             else
             {
-                SetAlert("Thêm người dùng thất bại", "danger");
+                ModelState.AddModelError("","Thêm người dùng thất bại");
             }
             return View();
         }
@@ -63,18 +63,28 @@ namespace InventoryManagerment.Controllers
             var dao = new DataAccess();
             var result = dao.UpdateUser(model,GetUserName());
             SetViewBag(model.RoleID);
-            HttpCookie httpcookie = Request.Cookies[Common.CommonConstants.USER_DATA];
-            if (model.ID.ToString() == httpcookie[Common.CommonConstants.User_ID])
+            if (result)
             {
-                httpcookie.Expires = DateTime.Now.AddDays(-1);
-                Response.Cookies.Add(httpcookie);
-                RedirectToAction("Index", "Login");
+
+                HttpCookie httpcookie = Request.Cookies[Common.CommonConstants.USER_DATA];
+                if (model.ID.ToString() == httpcookie[Common.CommonConstants.User_ID])
+                {
+                    httpcookie.Expires = DateTime.Now.AddDays(-1);
+                    Response.Cookies.Add(httpcookie);
+                    RedirectToAction("Index", "Login");
+                }
+                else
+                {
+                    return View();
+                }
+                return RedirectToAction("Index", "Login");
             }
             else
             {
+                ModelState.AddModelError("", "Tên người dùng này đã tồn tại, vui lòng thử lại");
                 return View();
             }
-            return RedirectToAction("Index", "Login");
+
         }
         public void SetViewBag(long? selectedId = null)
         {

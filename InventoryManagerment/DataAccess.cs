@@ -233,8 +233,17 @@ namespace InventoryManagerment
                 var user = db.Users.Find(model.ID);
                 if (user.UserName != model.UserName)
                 {
-                    user.UserName = model.UserName;
-                    action += $" | Cập nhật tài khoản từ '{user.UserName}' thành '{model.UserName}'";
+                    var result = db.Users.Where(x => x.UserName == model.UserName).FirstOrDefault();
+                    if(result != null)
+                    {
+                        user.UserName = model.UserName;
+                        action += $" | Cập nhật tài khoản từ '{user.UserName}' thành '{model.UserName}'";
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    
                 }
                 if (user.Password != model.Password)
                 {
@@ -338,10 +347,16 @@ namespace InventoryManagerment
         {
             try
             {
-                db.Users.Add(model);
-                db.SaveChanges();
-                SetHistory("insert", userName, "người dùng ", $"| Thêm tên tài khoản '{model.UserName}'");
-                return true;
+                var checkUser = db.Users.Where(x => x.UserName == model.UserName).FirstOrDefault();
+                if (checkUser == null)
+                {
+                    db.Users.Add(model);
+                    db.SaveChanges();
+                    SetHistory("insert", userName, "người dùng ", $"| Thêm tên tài khoản '{model.UserName}'");
+                    return true;
+                }
+                else return false;
+                
             }
             catch { return false; }
 
@@ -2907,13 +2922,17 @@ namespace InventoryManagerment
                 return result.OrderByDescending(x => x.Time).ToPagedList(page, pageSize);
             }
         }
-        public List<ProductViewModel> GetDataProductExcel(string searchString, long quantity, long typeProduct)
+        public List<ProductViewModel> GetDataProductExcel(string searchString, long quantity, long typeProduct, bool includeOrder)
         {
             var ListProductViewModel = new List<ProductViewModel>();
             var listProduct = db.Products.ToList();
             if (!string.IsNullOrEmpty(searchString))
             {
                 listProduct = listProduct.Where(x => x.Name.Contains(searchString)).ToList();
+            }
+            if(includeOrder == false)
+            {
+                listProduct = listProduct.Where(x=>x.IsOrder == false).ToList();
             }
             if(typeProduct != 0)
             {

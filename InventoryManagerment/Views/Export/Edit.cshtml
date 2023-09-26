@@ -46,7 +46,7 @@
     <h6>@TempData[InventoryManagerment.Common.CommonConstants.PAGE_NAME]</h6>
     <div class="input-group input-group-static my-3">
         <label>Ngày nhập</label>
-        <input type="datetime-local" id="txtTime" name="txtTime" class="form-control" />
+        <input type="datetime-local" id="txtTime" value="@Model.Export.Time.ToString("yyyy-MM-ddThh:mm")" name="txtTime" class="form-control" />
     </div>
     <div class="input-group input-group-static my-3 is-filled">
         <div class="col-12">
@@ -150,7 +150,6 @@
         let RoleID = @user.RoleID;
         $(document).ready(function () {
             SetAutoComplete();
-            setTime();
             $('#txtStatus option[value=@Model.Export.Status]').attr('selected', 'selected');
             $("#btnSave").click(function () {
                 SaveProduct();
@@ -333,10 +332,6 @@
             }
             return x1 + x2;
         }
-        function setTime() {
-            const dateControl = document.querySelector('input[type="datetime-local"]');
-            dateControl.value = '@Model.Export.Time.ToString("yyyy-MM-ddTHH:mm")';
-        };
         function editproduct(element) {
             if (RoleID == 1) {
                 var product = dataProduct.find(x => x.Code == $(element).closest("tr").find("td:eq(0)").attr('id'));

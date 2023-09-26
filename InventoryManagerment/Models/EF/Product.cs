@@ -29,6 +29,8 @@
         [DisplayName("Cách Thức Đóng Gói")]
         public long? PackageID { get; set; }
         public double Quantity { get; set; }
+        [DisplayName("Hàng Đặt")]
+        public bool IsOrder { get; set; }
         public decimal ImportPrice { get; set; }
     }
 }

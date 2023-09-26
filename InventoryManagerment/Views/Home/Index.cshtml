@@ -9,10 +9,10 @@
     var db = new InventoryDbContext();
     var categoryList = (IPagedList<InventoryManagerment.Models.EF.ProductCategory>)ViewBag.ListProductCategory;
     var pagelist = (List<InventoryManagerment.Models.EF.Export>)ViewBag.ListExport;
-    var listExport = db.Exports.ToList();
-    var listCategory = db.ProductCategories.ToList();
-    var listProduct = db.Products.ToList();
-    var listExportDetail = db.ExportDetails.ToList();
+    var listExport = db.Exports;
+    var listCategory = db.ProductCategories;
+    var listProduct = db.Products;
+    var listExportDetail = db.ExportDetails;
     string addListProduct()
     {
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -27,7 +27,6 @@
     }
     double sosanhdoanhthutheongay()
     {
-
         var homqua = DateTime.Today.AddDays(-1).Date;
         var homnay = DateTime.Today.Date;
         var Danhsachhomqua = db.Exports.Where(x => x.Time.Year == homqua.Year && x.Time.Month == homqua.Month && x.Time.Day == homqua.Day && x.ExportDelete == false).ToList();
@@ -85,7 +84,7 @@
     int soluongphieuxuathomnay()
     {
         var time = DateTime.Today.Date;
-        return db.Exports.Where(x => x.Time.Year == time.Year && x.Time.Month == time.Month && x.Time.Day == time.Day && x.ExportDelete == false).ToList().Count;
+        return db.Exports.Where(x => x.Time.Year == time.Year && x.Time.Month == time.Month && x.Time.Day == time.Day && x.ExportDelete == false).Count();
     }
     int soluongphieuxuatchuaduyethomnay()
     {
@@ -543,6 +542,10 @@ else
                                                             <option value="@item.ID">@item.Name</option>
                                                         }
                                                     </select>
+                                                </div>
+                                                <div class="form-check p-0">
+                                                    <input class="form-check-input" type="checkbox" value="true" id="txtIsOrder" name="txtIsOrder">
+                                                    <label class="custom-control-label" for="txtIsOrder">Bao gồm hàng đặt</label>
                                                 </div>
                                                 <div class="input-group input-group-static mb-4">
                                                     <label class="ms-0">Số lượng sản phẩm</label>

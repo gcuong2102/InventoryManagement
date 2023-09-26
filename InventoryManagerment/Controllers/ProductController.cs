@@ -111,9 +111,9 @@ namespace InventoryManagerment.Controllers
             return RedirectToAction("Index");
         }
         [HttpPost]
-        public void ExportDataProduct(string searchString, long quantity = 0, long typeProduct = 0)
+        public void ExportDataProduct(string searchString, long quantity = 0, long typeProduct = 0, bool txtIsOrder = false)
         {
-            var data = new DataAccess().GetDataProductExcel(searchString, quantity, typeProduct);
+            var data = new DataAccess().GetDataProductExcel(searchString, quantity, typeProduct,txtIsOrder);
 
             using (var package = new ExcelPackage())
             {

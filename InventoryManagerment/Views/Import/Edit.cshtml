@@ -177,8 +177,13 @@
 
                 <div style="margin-top:40px !important;" class="input-group input-group-static my-3">
                     <label>Số lượng tối thiểu</label>
-                    <input class="form-control" id="txtAlertQuantity" />
+                    <input type="text" class="form-control" id="txtAlertQuantity" />
                 </div>
+                <div class="form-check p-0">
+                    <input class="form-check-input" type="checkbox" id="txtIsOrder">
+                    <label class="custom-control-label" for="customCheck1">Hàng Đặt</label>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Đóng</button>
                     <button id="btnSaveProduct" type="submit" class="btn bg-gradient-primary" data-bs-dismiss="modal">Lưu sản phẩm</button>
@@ -912,6 +917,7 @@
             var packageID = $('#txtPackageProduct option:selected').val();
             var quantityAlert = $('#txtAlertQuantity').val();
             var categoryName = $('#txtCategoryID option:selected').text();
+            var isOrder = $('#check_id').is(":checked")
 
             if (nameProduct.length == 0) {
                 $.alert('Vui lòng nhập tên sản phẩm');
@@ -960,6 +966,7 @@
             product.UnitID = unitID;
             product.PackageID = packageID;
             product.QuantityAlert = quantityAlert;
+            product.IsOrder = isOrder;
             $.post("/Import/CreateProduct/", { product: product }, function () {
                 SetAutoComplete();
                 ClearState();

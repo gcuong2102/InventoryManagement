@@ -46,6 +46,14 @@
             @Html.ValidationMessageFor(model => model.QuantityAlert, "", new { @class = "text-danger" })
         </div>
 
+        <div style="margin-top:40px !important;" class="input-group input-group-static my-3">
+            <div class="form-check p-0">
+                @Html.CheckBoxFor(model => model.IsOrder, new { @class = "form-check-input" })
+                @Html.LabelFor(model => model.IsOrder, new { @class = "custom-control-label" })
+                @Html.ValidationMessageFor(model => model.IsOrder, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
         <div style="margin-top:40px !important;" class="form-group">
             <div class="col-md-offset-2 col-md-10">
                 <button type="submit" value="Create" class="btn btn-primary">Cập nhật sản phẩm</button>

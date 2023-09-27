@@ -2940,7 +2940,7 @@ namespace InventoryManagerment
             }
             if(quantity == 1)
             {
-                listProduct = listProduct.Where(x => x.Quantity < (x.QuantityAlert +(x.QuantityAlert * 1 / 4))).ToList();
+                listProduct = listProduct.Where(x => x.Quantity < 100).ToList();
             }
             if(quantity == 2)
             {

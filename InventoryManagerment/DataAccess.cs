@@ -3067,7 +3067,7 @@ namespace InventoryManagerment
             {
                 query = query.Where(q => q.ReceiveBill.Note.Contains(address));
             }
-
+            var db2 = new BANHANGCONTEXT();
             var groupedData = query
                                 .GroupBy(q => q.ReceiveBill.Code) // Group by Code
                                 .ToList() // Execute the query here
@@ -3081,6 +3081,7 @@ namespace InventoryManagerment
                                         UserID = firstItem?.ReceiveBill.UserID ?? 0,
                                         Time = firstItem?.ReceiveBill.Time ?? DateTime.MinValue,
                                         NameCustomer = firstItem?.ReceiveBill.CustomerName,
+                                        numberOfReceivce = db2.Invoice_Receivces.Where(x=>x.receivecode == firstItem.ReceiveBill.Code).Count(),
                                         code = firstItem?.ReceiveBill.Code
                                     };
                                 })
@@ -3124,6 +3125,13 @@ namespace InventoryManagerment
             var listImages = db.ReceiveBill.Where(r => r.Code == code).Select(r => r.Url_Image).ToList();
             var Location = db.Location.Where(x => x.code == code);
             var bill = db.ReceiveBill.Where(r => r.Code == code).FirstOrDefault();
+            var db2 = new BANHANGCONTEXT();
+            var listLinked = db2.Invoice_Receivces.Where(x=>x.receivecode == code).ToList();
+            var listInvoiceCode = new List<string>();
+            foreach(var item in listLinked)
+            {
+                listInvoiceCode.Add(item.invoicecode);
+            }
             string note = "";
             if (string.IsNullOrEmpty(bill.Note.Trim()))
             {
@@ -3133,7 +3141,7 @@ namespace InventoryManagerment
             {
                 note = bill.Note;
             }
-            return new { listImages = listImages, Location = Location, Note = note, Time = bill.Time.ToString("dd/MM/yyyy - HH:mm"),NameStaff = db.Users.Find(bill.UserID).Name };
+            return new { listImages = listImages, Location = Location, Note = note, Time = bill.Time.ToString("dd/MM/yyyy - HH:mm"),NameStaff = db.Users.Find(bill.UserID).Name,NumberOfLinked = listLinked.Count, listInvoiceCode = listInvoiceCode };
         }
         public object GetListAutoCompleteForReceiveBill()
         {

@@ -23,7 +23,9 @@
         margin-right: 10px; /* khoảng cách bên phải */
         margin-bottom: 10px; /* khoảng cách bên dưới */
     }
-
+    .bill-selected{
+        background-color: mediumaquamarine;
+    }
     #imageContainer {
         display: flex;
         flex-direction: row; /* Đổi từ column sang row */
@@ -38,6 +40,10 @@
             flex: 0 0 20%;
             max-width: 20%;
         }
+        .border-bot {
+            border-bottom: 2px solid;
+            width: 100%;
+        }
     }
 
     /* Máy tính bảng */
@@ -45,6 +51,9 @@
         .col-md-3col {
             flex: 0 0 33.33%;
             max-width: 33.33%;
+        }
+        .border-bot {
+            border-bottom: 2px solid;
         }
     }
 
@@ -54,9 +63,13 @@
             flex: 0 0 100%;
             max-width: 100%;
         }
+        .border-bot {
+            border-bottom: 2px solid;
+        }
     }
-
-
+    .list-group-item {
+        border: none!important
+    }
     .title-case {
         text-transform: capitalize;
     }
@@ -69,15 +82,18 @@
         overflow: auto;
         overflow: hidden; /* Thêm dòng này */
         position: relative; /* Thêm dòng này */
-        max-height:480px;
+        max-height: 480px;
     }
+
         .card:hover {
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Tăng bóng mờ khi di chuột qua */
             border-color: #007bff; /* Thay đổi màu viền khi di chuột qua */
         }
+
     .bg-image img {
         transition: transform 0.3s;
     }
+
     .is-selected {
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
         border: 2px solid transparent;
@@ -87,12 +103,13 @@
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35); /* Giữ nguyên bóng mờ */
         border-color: #FF0000; /* Đặt màu viền là màu đỏ, giữ nguyên màu viền khi có class is-selected */
     }
+
     .text-edit {
         border: 1px solid #ccc;
         padding: 8px 12px;
         border-radius: 4px;
         font-size: 14px;
-        width:100%;
+        width: 100%;
     }
 </style>
 <div class="row">
@@ -132,13 +149,13 @@
             <div class="modal-body">
                 <!-- Chi tiết phiếu gửi -->
                 <div id="locationDetails" class="mb-4">
-                    <h4 class="title-case" style="text-align: center"> <span id="customername"></span></h4>
+                    <h4 class="title-case" style="text-align: center"> <span id="customername"></span><span style="color:seagreen" id="invoiceIcon"></span></h4>
                     <p><b>Ngày Gửi:</b> <span id="created_date"></span></p>
                     <p><b>Người Gửi:</b> <span id="username"></span></p>
                     <p class="title-case"><b>Ghi Chú:</b> <span id="note"></span></p>
                     <p class="title-case"><b>Địa Chỉ:</b> <span id="description"></span></p>
                     <a class="btn btn-icon btn-3 btn-success" href="#" target="_blank" id="linktoMap"><span class="btn-inner--icon"><i class="material-icons">map</i></span> <span class="btn-inner--text">Google Map</span></a>
-                    <input hidden multiple type="file" id="imageInput"/>
+                    <input hidden multiple type="file" id="imageInput" />
                     <button hidden id="addImages" class="btn btn-icon btn-2 btn-primary" type="button">
                         <span class="btn-inner--icon"><i class="material-icons">add_photo_alternate</i></span>
                     </button>
@@ -149,9 +166,10 @@
                     <!-- Các ảnh sẽ được thêm vào đây -->
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer">             
                 <button hidden id="btnSaveEdit" type="button" class="btn bg-gradient-success">Lưu</button>
                 <button hidden id="btnCancelEdit" type="button" class="btn bg-gradient-danger">Hủy</button>
+                <button id="btnOpenModalMerge" type="button" class="btn bg-gradient-success">Tích Hợp</button>
                 <button id="btnEdit" type="button" class="btn bg-gradient-info">Sửa</button>
                 <button id="btnDelete" type="button" data-spcode="" onclick="DeleteImageFolder(this)" class="btn bg-gradient-danger">Xóa</button>
                 <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Đóng</button>
@@ -209,10 +227,16 @@
 <div class="row" id="listFolder">
     @foreach (var item in Model)
     {
-        <div id="@item.code" class="select-card col-1col col-md-3col col-lg-5col mt-3">       
+        <div id="@item.code" class="select-card col-1col col-md-3col col-lg-5col mt-3">
             <div class="card" onclick="GetImagesByDirectory(this)" data-code="@item.code">
                 <div class="card-header">
-                    <p class="title-case" style="text-align: center;"><b>@item.NameCustomer</b></p>
+                    <p class="title-case" style="text-align: center;">
+                        <b>@item.NameCustomer</b>
+                        @if (item.numberOfReceivce > 0)
+                        {
+                            <span style="color: seagreen"><i class="material-icons align-middle">check_circle</i></span>
+                        }
+                    </p>
                     <p><b><i class="material-icons align-middle">today</i> : @item.Time.ToString("dd/MM/yyyy - HH:mm")</b></p>
                     <p><b><i class="material-icons align-middle">record_voice_over</i> : @getNameUser(item.UserID)</b></p>
                 </div>
@@ -226,7 +250,33 @@
 <div class="row mt-3">
     <div style="text-align:center">
         <div style="display:inline-block" id="listPaginationProduct">
-            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize,customerName = ViewBag.customerName,staffName= ViewBag.staffName,address = ViewBag.address,note = ViewBag.noteReceiveBill, time = ViewBag.time }))
+            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize, customerName = ViewBag.customerName, staffName = ViewBag.staffName, address = ViewBag.address, note = ViewBag.noteReceiveBill, time = ViewBag.time }))
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="modalMerge" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalMergeLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalMergeLabel">Danh sách hóa đơn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="input-group input-group-static my-3">
+                        <label>Chọn Ngày</label>
+                        <input id="dateInvoice" type="date" class="form-control">
+                    </div>
+                    <div id="listInvoice" class="list-group overflow-auto overflow-x-auto overflow-y-auto">
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnMerge" type="button" class="btn btn-primary">Tích hợp</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
         </div>
     </div>
 </div>
@@ -248,7 +298,7 @@
                 $('.jconfirm').remove();
             });
             //Xử lý xóa hình ảnh
-            $('#imageContainer').on('click', 'img', function (event) {             
+            $('#imageContainer').on('click', 'img', function (event) {
                 var image_container = $(this).closest('div.img-container.mr-2');
                 var image = image_container.find('img');
 
@@ -308,7 +358,7 @@
                                                 $.alert(data.message, 'Thông báo')
                                             }
                                             hideSpinner();
-                                        });                                     
+                                        });
                                     }
                                 },
                                 cancel: {
@@ -367,13 +417,19 @@
 
                 var imgContainer = document.createElement('div');
                 imgContainer.classList.add('img-container', 'mr-2');
-                imgContainer.appendChild(imgElement);              
+                imgContainer.appendChild(imgElement);
                 imageContainer.appendChild(imgContainer);
             });
             // Xử lý thông tin vị trí
             var location = data.Location[0];
             $("#linktoMap").attr('href', getlinkGoogle(location.latitude, location.longitude))
             $("#note").html(data.Note)
+            if (data.NumberOfLinked > 0) {
+                $.each(data.listInvoiceCode, function (index, data) {
+                    $("#invoiceIcon").html('<a target="_blank" href="/Bill?billCode=' + data + '"><i class="material-icons">link</i></a>');
+                })
+                
+            }
             document.getElementById('description').textContent = location.description;
             document.getElementById('username').textContent = data.NameStaff;
             document.getElementById('created_date').textContent = data.Time
@@ -451,24 +507,24 @@
             };
             $.get("/ReceiveBill/GetNextData", params, function (response) {
                 if (response.success) {
-                    var newDiv = createNewDiv(response.data, response.nameStaff,response.time)
+                    var newDiv = createNewDiv(response.data, response.nameStaff, response.time)
                     $("#listFolder").append(newDiv);
                 }
             });
         }
-        function createNewDiv(data,nameStaff,time) {
+        function createNewDiv(data, nameStaff, time) {
             let div = `<div id="${data.code}" class="col-1col col-md-3col col-lg-5col mt-3">
-                <div class="card" onclick="GetImagesByDirectory(this)" data-code="${data.code}">
-                   <div class="card-header">
-                        <p class="title-case" style="text-align: center;"><b>${data.NameCustomer}</b></p>
-                        <p><b><i class="material-icons align-middle">today</i> : ${time}</b></p>
-                        <p><b><i class="material-icons align-middle">record_voice_over</i> : ${nameStaff}</b></p>
-                        </div>
-                        <div class="bg-image hover-overlay rounded">
-                            <img style="cursor: pointer;" src="https://tantuanhoan.com/${data.FirstImage}" class="w-100">
-                        </div>
-                   </div>
-               </div>`;
+                    <div class="card" onclick="GetImagesByDirectory(this)" data-code="${data.code}">
+                       <div class="card-header">
+                            <p class="title-case" style="text-align: center;"><b>${data.NameCustomer}</b></p>
+                            <p><b><i class="material-icons align-middle">today</i> : ${time}</b></p>
+                            <p><b><i class="material-icons align-middle">record_voice_over</i> : ${nameStaff}</b></p>
+                            </div>
+                            <div class="bg-image hover-overlay rounded">
+                                <img style="cursor: pointer;" src="https://tantuanhoan.com/${data.FirstImage}" class="w-100">
+                            </div>
+                       </div>
+                   </div>`;
             return div;
         }
         function getParameterByName(name, url = window.location.href) {
@@ -603,7 +659,44 @@
                     reader.readAsDataURL(file);
                 }
             });
-
+            $("#dateInvoice").on('change', function (event) {
+                showSpinner();
+                var selectedDate = $("#dateInvoice").val()
+                var receivceCode1 = $("#btnDelete").attr('data-spcode')
+                $.get('/ReceiveBill/GetDataInvoice/', { time: selectedDate, receiveCode: receivceCode1 }, function (data) {
+                    if (data.result) {
+                        getDataInvoice(data.data);
+                        $('#modalMerge').modal('show')
+                        hideSpinner();
+                    }
+                    else {
+                        hideSpinner();
+                        $.alert('Lỗi khi lấy hóa đơn: ' + data.message);
+                    }
+                })     
+            })
+            $("#listInvoice").on("click", ".hoadon", function () {
+                if ($(this).find('.border-bot').hasClass('bill-selected')) {
+                    $(this).find('.border-bot').removeClass('bill-selected');
+                }
+                else {
+                    $(this).find('.border-bot').addClass('bill-selected');
+                }             
+            });
+            $('#btnOpenModalMerge').click(function () {
+                var timeSelected = $('#created_date').html();
+                // Tách chuỗi để lấy phần ngày
+                var dateString = timeSelected.split(' - ')[0];
+                // Chuyển đổi định dạng ngày từ DD/MM/YYYY sang YYYY-MM-DD
+                var dateParts = dateString.split('/');
+                var formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                $("#dateInvoice").val(formattedDate).trigger('change');
+                $('#modalMerge').modal('show')     
+            
+            })
+            $('#btnMerge').click(function () {
+                mergeReceiveBill();
+            })
         }
         function removeSelected() {
             $(".card.is-selected").each(function () {
@@ -728,9 +821,9 @@
                         });
                     }
                 })
-                
+
             }
-            
+
         }
         function extractPathFromUrl(url) {
             // Thay thế tất cả dấu "\" bằng dấu "/"
@@ -760,6 +853,58 @@
             $('#note').html(detail.note)
             $('#description').html(detail.address)
             toggleBtn('off');
+        }
+        function getDataInvoice(data) {
+            // Xóa nội dung hiện tại của listInvoice
+            $("#listInvoice").empty();
+            if (data.length == 0) {
+                $("#listInvoice").append('<p>Không có hóa đơn nào</p>');
+                return;
+            }
+
+            $.each(data, (index, value) => {
+                if (value.LINKED) {
+                    var html = '<div class="list-group-item p-0 d-flex justify-content-between align-items-center mt-2 hoadon">' +
+                        '<div data-hoadon="' + value.MAHOADON + '" class="border-bot bill-selected"><h6>' + value.TENKHACHHANG + '</h6>' +
+                        '<p>Thời gian: ' + value.NGAYBAN + '</p>' +
+                        '<table class="table table-bordered table-striped table-sm"><thead><tr><th scope="col">Sản phẩm</th><th scope="col">Số lượng</th>' +
+                        '<th scope="col">Đơn giá</th><th scope="col">Tổng tiền</th></tr></thead><tbody>';
+                    value.Details.forEach(function (detail) {
+                        html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + detail.GIADONVI + '</td><td>' + detail.THANHTIEN + '</td></tr>';
+                    });
+                    html += '</tbody></table>' +
+                        '<h6>Tổng tiền: ' + value.TONGTIEN + ' VNĐ</h6></div>';
+                    // Thêm nội dung HTML vào cuối phần tử có ID là listInvoice
+                    $("#listInvoice").append(html);
+                }else{
+                    var html = '<div class="list-group-item p-0 d-flex justify-content-between align-items-center mt-2 hoadon">' +
+                        '<div data-hoadon="' + value.MAHOADON + '" class="border-bot"><h6>' + value.TENKHACHHANG + '</h6>' +
+                        '<p>Thời gian: ' + value.NGAYBAN + '</p>' +
+                        '<table class="table table-bordered table-striped table-sm"><thead><tr><th scope="col">Sản phẩm</th><th scope="col">Số lượng</th>' +
+                        '<th scope="col">Đơn giá</th><th scope="col">Tổng tiền</th></tr></thead><tbody>';
+                    value.Details.forEach(function (detail) {
+                        html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + detail.GIADONVI + '</td><td>' + detail.THANHTIEN + '</td></tr>';
+                    });
+                    html += '</tbody></table>' +
+                        '<h6>Tổng tiền: ' + value.TONGTIEN + ' VNĐ</h6></div>';
+                    // Thêm nội dung HTML vào cuối phần tử có ID là listInvoice
+                    $("#listInvoice").append(html);
+                }
+                
+            });
+        }
+        function mergeReceiveBill() {
+            showSpinner();
+            listMahoadon2 = []
+            var mahoadon = $('.bill-selected');           
+            var maphieugiaohang = $("#btnDelete").attr('data-spcode')
+            $.each(mahoadon, function () {
+                listMahoadon2.push($(this).attr('data-hoadon'))
+            });
+            $.post('/ReceiveBill/MergeInvoice/', { listMahoadon: listMahoadon2, image: maphieugiaohang }, function (data) {
+                $.alert('Tích hợp thành công', 'Thông Báo');
+                hideSpinner();
+            })
         }
     </script>
 }

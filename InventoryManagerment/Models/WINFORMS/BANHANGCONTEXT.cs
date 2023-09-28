@@ -24,6 +24,7 @@ namespace InventoryManagerment.Models.WINFORMS
         public virtual DbSet<NOTES> NOTEs { get; set; }
         public virtual DbSet<HOADONBAN> HOADONBANs { get; set; }
         public virtual DbSet<CHITIETHOADON> CHITIETHOADONs { get; set; }
+        public virtual DbSet<invoice_receivce> Invoice_Receivces { get; set; }
     }
 
     //public class MyEntity

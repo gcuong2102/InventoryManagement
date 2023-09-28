@@ -9,7 +9,7 @@ namespace InventoryManagerment.Controllers
     public class BillController : Controller
     {
         // GET: Bill
-        public ActionResult Index(string searchString,string nameProduct, string totalPrice, DateTime? dateBill, int page=1,int pageSize=10)
+        public ActionResult Index(string billCode, string searchString,string nameProduct, string totalPrice, DateTime? dateBill, int page=1,int pageSize=10)
         {
             TempData[Common.CommonConstants.PAGE_NAME] = "Hóa đơn";
             ViewBag.Title = "Tuấn Hoan - Danh Sách Hóa Đơn";
@@ -24,7 +24,7 @@ namespace InventoryManagerment.Controllers
             {
                 ViewBag.pageSize = pageSize;
             }
-            var model = new DataAccess2().ListAllHoaDonToPagedList(searchString,nameProduct,totalPrice, dateBill, page, pageSize);
+            var model = new DataAccess2().ListAllHoaDonToPagedList(billCode,searchString,nameProduct,totalPrice, dateBill, page, pageSize);
             return View(model);
         }
         [HttpGet]

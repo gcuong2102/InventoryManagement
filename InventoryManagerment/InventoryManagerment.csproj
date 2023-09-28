@@ -551,6 +551,7 @@
     <Compile Include="Models\WINFORMS\HOADONBAN.cs" />
     <Compile Include="Models\WINFORMS\BANHANGCONTEXT.cs" />
     <Compile Include="Models\WINFORMS\HoaDonBanModel.cs" />
+    <Compile Include="Models\WINFORMS\invoice_receivce.cs" />
     <Compile Include="Models\WINFORMS\NOTES.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModel\BillAutoComplete.cs" />
@@ -563,6 +564,7 @@
     <Compile Include="ViewModel\ImportDataViewModel.cs" />
     <Compile Include="ViewModel\ImportModel.cs" />
     <Compile Include="ViewModel\ImportViewModel.cs" />
+    <Compile Include="ViewModel\InvoiceViewModel.cs" />
     <Compile Include="ViewModel\ProductViewModel.cs" />
     <Compile Include="ViewModel\RefundModel.cs" />
     <Compile Include="ViewModel\RefundViewModel.cs" />

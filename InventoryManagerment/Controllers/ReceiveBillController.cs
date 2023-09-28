@@ -239,5 +239,17 @@ namespace InventoryManagerment.Controllers
             return Json(new { staff = staff, customer = customer },JsonRequestBehavior.AllowGet);
 
         }
+        [HttpGet]
+        public JsonResult GetDataInvoice(string time, string receiveCode)
+        {
+            var data = new DataAccess2().GetInvoiceByTime(time, receiveCode);
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+        [HttpPost]
+        public JsonResult MergeInvoice(string[] listMahoadon, string image)
+        {
+            var result = new DataAccess2().MergeInvoice(listMahoadon, image);
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
     }
 }

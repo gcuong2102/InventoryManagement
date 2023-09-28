@@ -1,4 +1,5 @@
 ﻿using InventoryManagerment.Common;
+using InventoryManagerment.Models.EF;
 using InventoryManagerment.Models.ModelProduct;
 using InventoryManagerment.Models.WINFORMS;
 using InventoryManagerment.ViewModel;
@@ -6,8 +7,11 @@ using MySqlX.XDevAPI.Common;
 using PagedList;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
+using System.Globalization;
 using System.Linq;
 using System.Web;
+using System.Web.UI;
 
 namespace InventoryManagerment
 {
@@ -167,7 +171,7 @@ namespace InventoryManagerment
             };
             return result;
         }
-        public IEnumerable<BillViewModel> ListAllHoaDonToPagedList(string searchString, string nameProduct, string totalPrice, DateTime? dateBill, int page, int pageSize)
+        public IEnumerable<BillViewModel> ListAllHoaDonToPagedList(string billCode, string searchString, string nameProduct, string totalPrice, DateTime? dateBill, int page, int pageSize)
         {
             string date = FormatDate(dateBill);
             double price = ParsePrice(totalPrice);
@@ -186,6 +190,12 @@ namespace InventoryManagerment
                             Detail = detail
                         };
 
+            // Thêm điều kiện cho billCode
+            if (!string.IsNullOrEmpty(billCode))
+            {
+                query = query.Where(q => q.Bill.MAHOADON == billCode);
+            }
+
             var groupedQuery = from q in query
                                group q by q.Bill.MAHOADON into grouped
                                let firstItem = grouped.FirstOrDefault() // Use let to get the first item
@@ -200,7 +210,6 @@ namespace InventoryManagerment
                                    TENKHACHHANG = firstItem.Bill.TENKHACHHANG,
                                    TONGTIEN = firstItem.Bill.TONGTIEN
                                };
-
 
             var ketqua = groupedQuery
                          .ToList() // Thực thi truy vấn và lấy dữ liệu
@@ -235,5 +244,88 @@ namespace InventoryManagerment
                 ngayBan.Substring(43, 2));
         }
 
+        public object GetInvoiceByTime(string time,string receiveCode)
+         {
+            try
+            {
+                var dateTime = DateTime.ParseExact(time, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                string date = dateTime.ToString("'Ngày' dd 'Tháng' MM 'Năm' yyyy");
+                List<InvoiceViewModel> result = new List<InvoiceViewModel>();
+                var invoices = db.HOADONBANs.Where(x => x.NGAYBAN.Contains(date)).ToList();
+                foreach(var item in invoices)
+                {
+                    var detail = db.CHITIETHOADONs.Where(x => x.MAHOADON.Equals(item.MAHOADON)).ToList();
+                    var invoice = new InvoiceViewModel()
+                    {
+                        MAHOADON = item.MAHOADON,
+                        NGAYBAN = item.NGAYBAN,
+                        TENKHACHHANG = item.TENKHACHHANG,
+                        TONGTIEN = item.TONGTIEN,
+                        LINKED = db.Invoice_Receivces.Where(x=>x.receivecode == receiveCode && x.invoicecode == item.MAHOADON).Any()? true : false, 
+                        Details = detail
+                    };
+                    result.Add(invoice);
+                }
+                return new { result = true, message = "" , data = result };
+            }
+            catch(Exception ex)
+            {
+                return new { result = false, message = ex.Message, data = ex };
+            }
+        
+        }
+
+        public object MergeInvoice(string[] listMahoadon, string image)
+        {
+            try
+            {
+                var dbInventory = new InventoryDbContext();
+                var listInvoiceLinked = db.Invoice_Receivces.Where(x => x.receivecode == image).ToList();
+                if (listMahoadon == null) 
+                {
+                    //Xóa các liên kết cũ
+                    if (listInvoiceLinked.Count > 0)
+                    {
+                        //Xóa các liên kết cũ
+                        foreach (var item in listInvoiceLinked)
+                        {
+                            db.Invoice_Receivces.Remove(item);
+                        }
+                        db.SaveChanges();
+                    }
+                    return new { result = false, message = "Null" };
+                }            
+                if(listInvoiceLinked.Count > 0)
+                {
+                    //Xóa các liên kết cũ
+                    foreach (var item in listInvoiceLinked)
+                    {
+                        db.Invoice_Receivces.Remove(item);
+                    }
+                }               
+                //Thêm các liên kết mới
+                foreach (var item in listMahoadon)
+                {
+                    var url_folder = dbInventory.ReceiveBill.Where(x => x.Code == image).FirstOrDefault().Url_Image;
+                    string[] directories = url_folder.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                    // Lấy tên thư mục bạn muốn, trong trường hợp này là phần tử thứ 1 trong mảng
+                    string folderName = directories[1];
+                    invoice_receivce link = new invoice_receivce()
+                    {
+                        receivecode = image,
+                        invoicecode = item,
+                        created_date = DateTime.Now,
+                        folder_url = folderName
+                    };
+                    db.Invoice_Receivces.Add(link);
+                    db.SaveChanges();
+                }
+                return new { result = true, message = "", data = db.Invoice_Receivces.ToList() };
+            }
+            catch (Exception ex) 
+            {
+                return new { result = false, message = ex.Message, data = ex };
+            }
+        }
     }
 }

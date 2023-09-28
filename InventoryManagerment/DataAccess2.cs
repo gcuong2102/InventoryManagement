@@ -274,7 +274,20 @@ namespace InventoryManagerment
             }
         
         }
-
+        public void UpdateStatusBill(string billCode)
+        {
+            var bill = db.HOADONBANs.Where(x => x.MAHOADON == billCode).FirstOrDefault();
+            var numberOfLink = db.Invoice_Receivces.Where(x=>x.invoicecode==billCode).Count();
+            if(numberOfLink == 0)
+            {
+                bill.ISLINKED = false;
+            }
+            else
+            {
+                bill.ISLINKED = true;
+            }
+            db.SaveChanges();
+        }
         public object MergeInvoice(string[] listMahoadon, string image)
         {
             try
@@ -289,9 +302,10 @@ namespace InventoryManagerment
                         //Xóa các liên kết cũ
                         foreach (var item in listInvoiceLinked)
                         {
-                            db.Invoice_Receivces.Remove(item);
+
                         }
                         db.SaveChanges();
+
                     }
                     return new { result = false, message = "Null" };
                 }            
@@ -319,6 +333,7 @@ namespace InventoryManagerment
                     };
                     db.Invoice_Receivces.Add(link);
                     db.SaveChanges();
+                    UpdateStatusBill(item);
                 }
                 return new { result = true, message = "", data = db.Invoice_Receivces.ToList() };
             }

@@ -17,5 +17,6 @@ namespace InventoryManagerment.Models.WINFORMS
         public string TENKHACHHANG { get; set; }
         public double DEPT { get; set; }
         public double TONGTIEN { get; set; }
+        public bool ISLINKED { get;set; }
     }
 }

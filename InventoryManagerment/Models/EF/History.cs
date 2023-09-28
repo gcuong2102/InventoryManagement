@@ -14,6 +14,6 @@
         public string ActionKey { get; set; }
         public string UserName { get; set; }
         public string Object { get; set; }
-        public string ReceiptCode { get; set; }
+        public string ReceiptCode { get; set; }       
     }
 }

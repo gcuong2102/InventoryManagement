@@ -24,24 +24,6 @@
                         <span class="nav-link-text ms-1">Trang chủ</span>
                     </a>
                 </li>
-                <!--Quản lý phiếu xuất-->
-                <li class="nav-item">
-                    <a class="nav-link text-white " href="/Export" target="_self">
-
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">unarchive</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Xuất kho</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white " href="/xemphieugiaohang" target="_self">
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">all_inbox</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Phiếu Giao Hàng</span>
-                    </a>
-                </li>
                 <!--Quản lý phiếu nhập-->
                 <li class="nav-item">
                     <a class="nav-link text-white " href="/Import" target="_self">
@@ -51,6 +33,16 @@
                         </div>
 
                         <span class="nav-link-text ms-1">Nhập kho</span>
+                    </a>
+                </li>
+                <!--Quản lý phiếu xuất-->
+                <li class="nav-item">
+                    <a class="nav-link text-white " href="/Export" target="_self">
+
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">unarchive</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Xuất kho</span>
                     </a>
                 </li>
                 <!--Quản lý phiếu trả-->
@@ -72,6 +64,14 @@
                         </div>
 
                         <span class="nav-link-text ms-1">Quản lý kho</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white " href="/xemphieugiaohang" target="_self">
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">all_inbox</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Phiếu Giao Hàng</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -254,6 +254,15 @@ else if (user.RoleID == 2)
                         <span class="nav-link-text ms-1">Trang chủ</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white " href="/Import/Create" target="_self">
+
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">unarchive</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Tạo phiếu nhập</span>
+                    </a>
+                </li>
                 <!--Quản lý phiếu xuất-->
                 <li class="nav-item">
                     <a class="nav-link text-white " href="/Export/Create" target="_self">
@@ -264,15 +273,7 @@ else if (user.RoleID == 2)
                         <span class="nav-link-text ms-1">Tạo phiếu xuất</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white " href="/Import/Create" target="_self">
 
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">unarchive</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Tạo phiếu nhập</span>
-                    </a>
-                </li>
                 <li class="nav-item">
                     <a class="nav-link text-white " href="/Refund/Create" target="_self">
 
@@ -337,6 +338,15 @@ else
                         <span class="nav-link-text ms-1">Trang chủ</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white " href="/Import/Create" target="_self">
+
+                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="material-icons opacity-10">list_alt</i>
+                        </div>
+                        <span class="nav-link-text ms-1">Các phiếu nhập</span>
+                    </a>
+                </li>
                 <!--Quản lý phiếu xuất-->
                 <li class="nav-item">
                     <a class="nav-link text-white " href="/Import/Create" target="_self">
@@ -347,15 +357,7 @@ else
                         <span class="nav-link-text ms-1">Tạo phiếu nhập</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white " href="/Import/Create" target="_self">
 
-                        <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="material-icons opacity-10">list_alt</i>
-                        </div>
-                        <span class="nav-link-text ms-1">Các phiếu nhập</span>
-                    </a>
-                </li>
 
             </ul>
         </div>

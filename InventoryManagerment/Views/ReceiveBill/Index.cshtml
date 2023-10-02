@@ -14,6 +14,14 @@
     }
 }
 <style>
+    .filter-name{
+        display: none !important
+    }
+    #listPaginationProduct {
+        overflow-x: auto; /* Cho phép cuộn ngang */
+        max-width: 100%; /* Giới hạn chiều rộng tối đa */
+        white-space: nowrap; /* Ngăn chặn xuống dòng */
+    }
     .square-image {
         width: 150px;
         height: 150px;
@@ -23,13 +31,15 @@
         margin-right: 10px; /* khoảng cách bên phải */
         margin-bottom: 10px; /* khoảng cách bên dưới */
     }
-    .bill-selected{
+
+    .bill-selected {
         background-color: mediumaquamarine;
     }
+
     #imageContainer {
         display: flex;
         flex-direction: row; /* Đổi từ column sang row */
-        flex-wrap: nowrap; /* Ngăn chặn việc xuống hàng */
+        flex-wrap: wrap; /* Ngăn chặn việc xuống hàng */
         overflow-x: auto; /* Cho phép cuộn ngang nếu hình ảnh vượt quá chiều rộng của container */
         align-items: center; /* Căn giữa theo chiều dọc */
     }
@@ -40,6 +50,7 @@
             flex: 0 0 20%;
             max-width: 20%;
         }
+
         .border-bot {
             border-bottom: 2px solid;
             width: 100%;
@@ -52,6 +63,7 @@
             flex: 0 0 33.33%;
             max-width: 33.33%;
         }
+
         .border-bot {
             border-bottom: 2px solid;
         }
@@ -63,13 +75,16 @@
             flex: 0 0 100%;
             max-width: 100%;
         }
+
         .border-bot {
             border-bottom: 2px solid;
         }
     }
+
     .list-group-item {
-        border: none!important
+        border: none !important
     }
+
     .title-case {
         text-transform: capitalize;
     }
@@ -99,6 +114,7 @@
         border: 2px solid transparent;
         border-color: #FF0000;
     }
+
     .card.is-selected:hover {
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35); /* Giữ nguyên bóng mờ */
         border-color: #FF0000; /* Đặt màu viền là màu đỏ, giữ nguyên màu viền khi có class is-selected */
@@ -112,33 +128,6 @@
         width: 100%;
     }
 </style>
-<div class="row">
-    <div class="col">
-        <h3>Phiếu Giao Hàng</h3>
-    </div>
-    <div class="col" style="text-align:right">
-        <button hidden id="btnCloseSelectMode" class="btn btn-icon btn-3 btn-success" type="button">
-            <span class="btn-inner--icon"><i class="material-icons">close</i></span>
-            <span class="btn-inner--text">Hủy</span>
-        </button>
-        <button hidden id="btnDeleteMultiple" class="btn btn-icon btn-3 btn-danger" type="button">
-            <span class="btn-inner--icon"><i class="material-icons">done</i></span>
-            <span class="btn-inner--text">Đồng ý</span>
-        </button>
-        <div class="btn-group dropdown">
-            <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="material-icons">construction</i> Công cụ
-            </button>
-            <ul class="dropdown-menu px-2 py-3" aria-labelledby="dropdownMenuButton">
-                <li><a id="selectDelete" class="dropdown-item border-radius-md" href="javascript:;">Xóa</a></li>
-            </ul>
-        </div>
-        <button class="btn btn-icon btn-3 btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
-            <span class="btn-inner--icon"><i class="material-icons">search</i></span>
-            <span class="btn-inner--text">Tìm kiếm</span>
-        </button>
-    </div>
-</div>
 <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <!-- Sử dụng modal-lg để modal lớn hơn -->
@@ -166,7 +155,7 @@
                     <!-- Các ảnh sẽ được thêm vào đây -->
                 </div>
             </div>
-            <div class="modal-footer">             
+            <div class="modal-footer">
                 <button hidden id="btnSaveEdit" type="button" class="btn bg-gradient-success">Lưu</button>
                 <button hidden id="btnCancelEdit" type="button" class="btn bg-gradient-danger">Hủy</button>
                 <button id="btnOpenModalMerge" type="button" class="btn bg-gradient-success">Tích Hợp</button>
@@ -224,6 +213,69 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="modalMerge" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalMergeLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalMergeLabel">Danh sách hóa đơn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="input-group input-group-static my-3">
+                                <label>Tên Khách Hàng</label>
+                                <input id="FilterCustomerName" type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="input-group input-group-static my-3">
+                                <label>Chọn Ngày</label>
+                                <input id="dateInvoice" type="date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="listInvoice" class="list-group overflow-auto overflow-x-auto overflow-y-auto">
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnMerge" type="button" class="btn btn-primary">Tích hợp</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <h3>Phiếu Giao Hàng</h3>
+    </div>
+    <div class="col" style="text-align:right">
+        <button hidden id="btnCloseSelectMode" class="btn btn-icon btn-3 btn-success" type="button">
+            <span class="btn-inner--icon"><i class="material-icons">close</i></span>
+            <span class="btn-inner--text">Hủy</span>
+        </button>
+        <button hidden id="btnDeleteMultiple" class="btn btn-icon btn-3 btn-danger" type="button">
+            <span class="btn-inner--icon"><i class="material-icons">done</i></span>
+            <span class="btn-inner--text">Đồng ý</span>
+        </button>
+        <div class="btn-group dropdown">
+            <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="material-icons">construction</i> Công cụ
+            </button>
+            <ul class="dropdown-menu px-2 py-3" aria-labelledby="dropdownMenuButton">
+                <li><a id="selectDelete" class="dropdown-item border-radius-md" href="javascript:;">Xóa</a></li>
+            </ul>
+        </div>
+        <button class="btn btn-icon btn-3 btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+            <span class="btn-inner--icon"><i class="material-icons">search</i></span>
+            <span class="btn-inner--text">Tìm kiếm</span>
+        </button>
+    </div>
+</div>
 <div class="row" id="listFolder">
     @foreach (var item in Model)
     {
@@ -246,40 +298,13 @@
             </div>
         </div>
     }
-</div>
-<div class="row mt-3">
-    <div style="text-align:center">
+    <div class="mt-3" style="text-align:center">
         <div style="display:inline-block" id="listPaginationProduct">
             @Html.PagedListPager(Model, page => Url.Action("Index", new { page, pageSize = ViewBag.PageSize, customerName = ViewBag.customerName, staffName = ViewBag.staffName, address = ViewBag.address, note = ViewBag.noteReceiveBill, time = ViewBag.time }))
         </div>
     </div>
 </div>
 <!-- Modal -->
-<div class="modal fade" id="modalMerge" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalMergeLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalMergeLabel">Danh sách hóa đơn</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
-            </div>
-            <div class="modal-body">
-                <div class="container">
-                    <div class="input-group input-group-static my-3">
-                        <label>Chọn Ngày</label>
-                        <input id="dateInvoice" type="date" class="form-control">
-                    </div>
-                    <div id="listInvoice" class="list-group overflow-auto overflow-x-auto overflow-y-auto">
-                        
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="btnMerge" type="button" class="btn btn-primary">Tích hợp</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
 @section jsFooter{
     <script>
         let selectedFiles = [];
@@ -428,7 +453,7 @@
                 $.each(data.listInvoiceCode, function (index, data) {
                     $("#invoiceIcon").html('<a target="_blank" href="/Bill?billCode=' + data + '"><i class="material-icons">link</i></a>');
                 })
-                
+
             }
             document.getElementById('description').textContent = location.description;
             document.getElementById('username').textContent = data.NameStaff;
@@ -514,17 +539,17 @@
         }
         function createNewDiv(data, nameStaff, time) {
             let div = `<div id="${data.code}" class="col-1col col-md-3col col-lg-5col mt-3">
-                    <div class="card" onclick="GetImagesByDirectory(this)" data-code="${data.code}">
-                       <div class="card-header">
-                            <p class="title-case" style="text-align: center;"><b>${data.NameCustomer}</b></p>
-                            <p><b><i class="material-icons align-middle">today</i> : ${time}</b></p>
-                            <p><b><i class="material-icons align-middle">record_voice_over</i> : ${nameStaff}</b></p>
-                            </div>
-                            <div class="bg-image hover-overlay rounded">
-                                <img style="cursor: pointer;" src="https://tantuanhoan.com/${data.FirstImage}" class="w-100">
-                            </div>
-                       </div>
-                   </div>`;
+                        <div class="card" onclick="GetImagesByDirectory(this)" data-code="${data.code}">
+                           <div class="card-header">
+                                <p class="title-case" style="text-align: center;"><b>${data.NameCustomer}</b></p>
+                                <p><b><i class="material-icons align-middle">today</i> : ${time}</b></p>
+                                <p><b><i class="material-icons align-middle">record_voice_over</i> : ${nameStaff}</b></p>
+                                </div>
+                                <div class="bg-image hover-overlay rounded">
+                                    <img style="cursor: pointer;" src="https://tantuanhoan.com/${data.FirstImage}" class="w-100">
+                                </div>
+                           </div>
+                       </div>`;
             return div;
         }
         function getParameterByName(name, url = window.location.href) {
@@ -673,7 +698,7 @@
                         hideSpinner();
                         $.alert('Lỗi khi lấy hóa đơn: ' + data.message);
                     }
-                })     
+                })
             })
             $("#listInvoice").on("click", ".hoadon", function () {
                 if ($(this).find('.border-bot').hasClass('bill-selected')) {
@@ -681,7 +706,7 @@
                 }
                 else {
                     $(this).find('.border-bot').addClass('bill-selected');
-                }             
+                }
             });
             $('#btnOpenModalMerge').click(function () {
                 var timeSelected = $('#created_date').html();
@@ -691,12 +716,52 @@
                 var dateParts = dateString.split('/');
                 var formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
                 $("#dateInvoice").val(formattedDate).trigger('change');
-                $('#modalMerge').modal('show')     
-            
+                $('#modalMerge').modal('show')
+
             })
             $('#btnMerge').click(function () {
                 mergeReceiveBill();
             })
+            $('#FilterCustomerName').on('input', function () {
+                // Lấy giá trị từ ô input và chuyển thành chữ thường
+                const searchText = $(this).val().toLowerCase();
+                console.log(searchText)
+                // Duyệt qua từng thẻ div có class là 'hoadon'
+                $('.hoadon').each(function () {
+                    // Lấy nội dung của thẻ h6 có class là 'customerName' và chuyển thành chữ thường
+                    const customerName = $(this).find('.customerName').text().toLowerCase();
+                    // Kiểm tra xem nội dung có chứa searchText hay không
+                    if (removeAccents(customerName).includes(searchText)) {
+                        // Hiển thị thẻ div nếu có
+                        $(this).removeClass("filter-name");
+                    } else {
+                        // Ẩn thẻ div nếu không
+                        $(this).addClass("filter-name");
+                    }
+                });
+            });
+        }
+        function removeAccents(str) {
+            var map = {
+                'á': 'a', 'à': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+                'ă': 'a', 'ắ': 'a', 'ằ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
+                'â': 'a', 'ấ': 'a', 'ầ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
+                'đ': 'd',
+                'é': 'e', 'è': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+                'ê': 'e', 'ế': 'e', 'ề': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
+                'í': 'i', 'ì': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+                'ó': 'o', 'ò': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+                'ô': 'o', 'ố': 'o', 'ồ': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
+                'ơ': 'o', 'ớ': 'o', 'ờ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
+                'ú': 'u', 'ù': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+                'ư': 'u', 'ứ': 'u', 'ừ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
+                'ý': 'y', 'ỳ': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y'
+            };
+            var result = str.toLowerCase();
+            for (var key in map) {
+                result = result.replace(new RegExp(key, 'g'), map[key]);
+            }
+            return result;
         }
         function removeSelected() {
             $(".card.is-selected").each(function () {
@@ -857,6 +922,7 @@
         function getDataInvoice(data) {
             // Xóa nội dung hiện tại của listInvoice
             $("#listInvoice").empty();
+            $('#FilterCustomerName').val('')
             if (data.length == 0) {
                 $("#listInvoice").append('<p>Không có hóa đơn nào</p>');
                 return;
@@ -865,10 +931,10 @@
             $.each(data, (index, value) => {
                 if (value.LINKED) {
                     var html = '<div class="list-group-item p-0 d-flex justify-content-between align-items-center mt-2 hoadon">' +
-                        '<div data-hoadon="' + value.MAHOADON + '" class="border-bot bill-selected"><h6>' + value.TENKHACHHANG + '</h6>' +
-                        '<p>Thời gian: ' + value.NGAYBAN + '</p>' +
+                        '<div data-hoadon="' + value.MAHOADON + '" class="border-bot bill-selected"><h6 class="customerName">' + value.TENKHACHHANG + '</h6>' +
+                        '<p>' + value.NGAYBAN + '</p>' +
                         '<table class="table table-bordered table-striped table-sm"><thead><tr><th scope="col">Sản phẩm</th><th scope="col">Số lượng</th>' +
-                        '<th scope="col">Đơn giá</th><th scope="col">Tổng tiền</th></tr></thead><tbody>';
+                        '<th scope="col">Đơn giá</th><th scope="col">Tổng Tiền</th></tr></thead><tbody>';
                     value.Details.forEach(function (detail) {
                         html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + detail.GIADONVI + '</td><td>' + detail.THANHTIEN + '</td></tr>';
                     });
@@ -876,12 +942,12 @@
                         '<h6>Tổng tiền: ' + value.TONGTIEN + ' VNĐ</h6></div>';
                     // Thêm nội dung HTML vào cuối phần tử có ID là listInvoice
                     $("#listInvoice").append(html);
-                }else{
+                } else {
                     var html = '<div class="list-group-item p-0 d-flex justify-content-between align-items-center mt-2 hoadon">' +
-                        '<div data-hoadon="' + value.MAHOADON + '" class="border-bot"><h6>' + value.TENKHACHHANG + '</h6>' +
-                        '<p>Thời gian: ' + value.NGAYBAN + '</p>' +
+                        '<div data-hoadon="' + value.MAHOADON + '" class="border-bot"><h6 class="customerName">' + value.TENKHACHHANG + '</h6>' +
+                        '<p>' + value.NGAYBAN + '</p>' +
                         '<table class="table table-bordered table-striped table-sm"><thead><tr><th scope="col">Sản phẩm</th><th scope="col">Số lượng</th>' +
-                        '<th scope="col">Đơn giá</th><th scope="col">Tổng tiền</th></tr></thead><tbody>';
+                        '<th scope="col">Đơn giá</th><th scope="col">Tổng Tiền</th></tr></thead><tbody>';
                     value.Details.forEach(function (detail) {
                         html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + detail.GIADONVI + '</td><td>' + detail.THANHTIEN + '</td></tr>';
                     });
@@ -890,13 +956,13 @@
                     // Thêm nội dung HTML vào cuối phần tử có ID là listInvoice
                     $("#listInvoice").append(html);
                 }
-                
+
             });
         }
         function mergeReceiveBill() {
             showSpinner();
             listMahoadon2 = []
-            var mahoadon = $('.bill-selected');           
+            var mahoadon = $('.bill-selected');
             var maphieugiaohang = $("#btnDelete").attr('data-spcode')
             $.each(mahoadon, function () {
                 listMahoadon2.push($(this).attr('data-hoadon'))

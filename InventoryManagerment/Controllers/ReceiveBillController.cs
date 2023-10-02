@@ -56,7 +56,7 @@ namespace InventoryManagerment.Controllers
             try
             {
                 // Tạo tên thư mục duy nhất dựa trên tên khách hàng và timestamp
-                string uniqueFolderName = customerName.Trim() + "_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                string uniqueFolderName = ConvertFolderName(customerName.Trim()) + "_" + DateTime.Now.ToString("yyyyMMddHHmmss");
                 string folderPath = Path.Combine(@"\\103.116.105.192\ReceivedBill", uniqueFolderName);
 
                 // Kiểm tra và tạo thư mục nếu chưa tồn tại
@@ -70,7 +70,7 @@ namespace InventoryManagerment.Controllers
                 {
                     if (file != null && file.ContentLength > 0)
                     {
-                        var fileName = customerName.Trim() + Functions.GenerateUniqueCode() + ".webp"; // Lưu với đuôi .webp
+                        var fileName = ConvertFolderName(customerName.Trim()) + Functions.GenerateUniqueCode() + ".webp"; // Lưu với đuôi .webp
                         var path = Path.Combine(folderPath, fileName); // Lưu vào thư mục duy nhất
 
                         using (var imageStream = new MemoryStream())
@@ -97,6 +97,10 @@ namespace InventoryManagerment.Controllers
             {
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
+        }
+        private string ConvertFolderName(string fileName)
+        {
+            return fileName.Replace('\\', '.').Replace('/', '.');
         }
         private void SaveCompressedImage(Stream sourceStream, string outputPath, long quality)
         {

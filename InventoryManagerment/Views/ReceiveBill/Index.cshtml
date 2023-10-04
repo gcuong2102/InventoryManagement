@@ -14,6 +14,7 @@
     }
 }
 <style>
+
     .filter-name{
         display: none !important
     }
@@ -91,7 +92,7 @@
 </style>
 <style>
     .card {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Thêm bóng mờ cho card */
+        box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px; /* Thêm bóng mờ cho card */
         transition: transform 0.3s, box-shadow 0.3s; /* Thêm hiệu ứng chuyển động */
         border: 1px solid transparent; /* Thêm viền trong suốt */
         overflow: auto;
@@ -304,6 +305,11 @@
         </div>
     </div>
 </div>
+<div id="popover-content" class="d-none">
+    <label>Nhập mật khẩu để xóa</label>
+    <input id="confirmPassword" type="text" placeholder="Mật khẩu" class="text-edit form-control" required />
+    <button id="submitPassword" class="btn btn-danger mt-2">Xóa</button>
+</div>
 <!-- Modal -->
 @section jsFooter{
     <script>
@@ -451,7 +457,7 @@
             $("#note").html(data.Note)
             if (data.NumberOfLinked > 0) {
                 $.each(data.listInvoiceCode, function (index, data) {
-                    $("#invoiceIcon").html('<a target="_blank" href="/Bill?billCode=' + data + '"><i class="material-icons">link</i></a>');
+                    $("#invoiceIcon").html('<a target="_blank" href="/Bill?billCode=' + data + '"> <i class="material-icons align-middle mb-1">check_circle</i></a>');
                 })
 
             }
@@ -482,34 +488,40 @@
             let container = $("#" + code)
             $.confirm({
                 title: 'Thông báo',
-                content: 'Bạn có chắc muốn xóa thư mục này và tất cả hình ảnh bên trong?',
+                content: 'Bạn có chắc muốn xóa thư mục này và tất cả hình ảnh bên trong?' +
+                   '  <input id="confirmDelete" val="123" type="checkbox">',
                 buttons: {
                     confirm:
                     {
                         text: 'Đồng ý',
                         key: ['enter'],
                         action: function () {
-                            $.post("/ReceiveBill/Delete/", { code: code }, function (result) {
-                                if (result.result) {
-                                    container.remove();
-                                    $("#detailModal").modal('hide')
-                                    var obj = $.alert({
-                                        title: 'Thông báo',
-                                        content: 'Xóa thành công',
-                                    });
-                                    setTimeout(function () {
-                                        obj.close();
-                                    }, 1500);
-                                    ReplaceItems();
-                                }
-                                else {
-                                    $.alert({
-                                        title: 'Thông Báo',
-                                        content: result.Message
-                                    })
-                                }
-
-                            });
+                            console.log($('#confirmDelete'))
+                            if ($('#confirmDelete').is(":checked")) {
+                                $.post("/ReceiveBill/Delete/", { code: code }, function (result) {
+                                    if (result.result) {
+                                        container.remove();
+                                        $("#detailModal").modal('hide')
+                                        var obj = $.alert({
+                                            title: 'Thông báo',
+                                            content: 'Xóa thành công',
+                                        });
+                                        setTimeout(function () {
+                                            obj.close();
+                                        }, 1500);
+                                        ReplaceItems();
+                                    }
+                                    else {
+                                        $.alert({
+                                            title: 'Thông Báo',
+                                            content: result.Message
+                                        })
+                                    }
+                                });               
+                            } else {
+                                $.alert("Vui lòng xác nhận xóa")
+                                return;
+                            }                         
                         }
                     },
                     cancel: {
@@ -603,29 +615,36 @@
             $("#btnDeleteMultiple").on('click', function () {
                 $.confirm({
                     title: 'Thông báo',
-                    content: 'Bạn có chắc muốn xóa',
+                    content: 'Bạn có chắc muốn xóa' +
+                        '  <input id="confirmDeleteMulti" val="123" type="checkbox">',
                     buttons: {
                         confirm: {
                             text: 'Đồng ý',
                             action: function () {
-                                var listSelected = $('.card.is-selected');
-                                var data = []
-                                listSelected.each(function (i, val) {
-                                    data.push($(val).data('code'));
-                                })
-                                $.post("/ReceiveBill/DeleteMultiple/", { listCode: data }, function (result) {
-                                    if (result) {
-                                        $("#btnCloseSelectMode").attr('hidden', true)
-                                        $("#btnDeleteMultiple").attr('hidden', true)
-                                        removeSelected();
-                                        listSelected.each(function (i, val) {
-                                            $("#" + $(val).data('code')).remove();
-                                        })
-                                    }
-                                    else {
-                                        $(result.Message);
-                                    }
-                                })
+                                if ($('#confirmDeleteMulti').is(":checked")) {
+                                    var listSelected = $('.card.is-selected');
+                                    var data = []
+                                    listSelected.each(function (i, val) {
+                                        data.push($(val).data('code'));
+                                    })
+                                    $.post("/ReceiveBill/DeleteMultiple/", { listCode: data }, function (result) {
+                                        if (result) {
+                                            $("#btnCloseSelectMode").attr('hidden', true)
+                                            $("#btnDeleteMultiple").attr('hidden', true)
+                                            removeSelected();
+                                            listSelected.each(function (i, val) {
+                                                $("#" + $(val).data('code')).remove();
+                                            })
+                                        }
+                                        else {
+                                            $(result.Message);
+                                        }
+                                    })
+                                } else {
+                                    $.alert("Vui lòng xác nhận xóa")
+                                    return;
+                                }
+
                             }
                         },
                         cancel: {
@@ -936,10 +955,10 @@
                         '<table class="table table-bordered table-striped table-sm"><thead><tr><th scope="col">Sản phẩm</th><th scope="col">Số lượng</th>' +
                         '<th scope="col">Đơn giá</th><th scope="col">Tổng Tiền</th></tr></thead><tbody>';
                     value.Details.forEach(function (detail) {
-                        html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + detail.GIADONVI + '</td><td>' + detail.THANHTIEN + '</td></tr>';
+                        html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + formatVND(detail.GIADONVI) + ' VNĐ</td><td>' + formatVND(detail.THANHTIEN) + ' VNĐ</td></tr>';
                     });
                     html += '</tbody></table>' +
-                        '<h6>Tổng tiền: ' + value.TONGTIEN + ' VNĐ</h6></div>';
+                        '<h6>Tổng Tiền: ' + formatVND(value.TONGTIEN) +' VNĐ</h6></div>';
                     // Thêm nội dung HTML vào cuối phần tử có ID là listInvoice
                     $("#listInvoice").append(html);
                 } else {
@@ -949,10 +968,10 @@
                         '<table class="table table-bordered table-striped table-sm"><thead><tr><th scope="col">Sản phẩm</th><th scope="col">Số lượng</th>' +
                         '<th scope="col">Đơn giá</th><th scope="col">Tổng Tiền</th></tr></thead><tbody>';
                     value.Details.forEach(function (detail) {
-                        html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + detail.GIADONVI + '</td><td>' + detail.THANHTIEN + '</td></tr>';
+                        html += '<tr><td>' + detail.TENSANPHAM + '</td><td>' + detail.SOLUONG + '</td><td>' + formatVND(detail.GIADONVI) + ' VNĐ</td><td>' + formatVND(detail.THANHTIEN) +  ' VNĐ</td></tr>';
                     });
                     html += '</tbody></table>' +
-                        '<h6>Tổng tiền: ' + value.TONGTIEN + ' VNĐ</h6></div>';
+                        '<h6>Tổng Tiền: ' + formatVND(value.TONGTIEN) + ' VNĐ</h6></div>';
                     // Thêm nội dung HTML vào cuối phần tử có ID là listInvoice
                     $("#listInvoice").append(html);
                 }
@@ -968,7 +987,17 @@
                 listMahoadon2.push($(this).attr('data-hoadon'))
             });
             $.post('/ReceiveBill/MergeInvoice/', { listMahoadon: listMahoadon2, image: maphieugiaohang }, function (data) {
-                $.alert('Tích hợp thành công', 'Thông Báo');
+                //$.alert('Tích hợp thành công', 'Thông Báo');
+                if (listMahoadon2.length > 0) {
+                    if (!$('div#' + maphieugiaohang + ' p.title-case').find('span').length) {
+                        $('div#' + maphieugiaohang + ' p.title-case').append('<span style="color: seagreen"><i class="material-icons align-middle">check_circle</i></span>')
+                    }
+                } else {
+                    if ($('div#' + maphieugiaohang + ' p.title-case').find('span').length) {
+                        $('div#' + maphieugiaohang + ' p.title-case').find('span').remove();
+                    }
+                }
+                $('#modalMerge').modal('hide')              
                 hideSpinner();
             })
         }

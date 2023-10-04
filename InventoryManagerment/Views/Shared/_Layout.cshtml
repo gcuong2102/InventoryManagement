@@ -102,6 +102,7 @@
     <script src="~/assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="~/assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="~/assets/js/plugins/chartjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
     <script>
         var lastResults = []
@@ -173,7 +174,7 @@
                     $(this).find('a').addClass('page-link')
                 });
             }
-            
+
 
         }
     </script>
@@ -261,7 +262,12 @@
                 }
             }
         }
+        function formatVND(number) {
+            return number.toLocaleString('vi-VN');
+        }
     </script>
+
+
     @RenderSection("jsFooter", false)
 </body>
 </html>

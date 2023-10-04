@@ -1,4 +1,4 @@
-﻿@{
+﻿﻿@{
     ViewBag.Title = "Gửi Phiếu Giao Hàng";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -284,6 +284,13 @@
                             console.log(error, 'Có lỗi xảy ra, vui lòng thử lại');
                         }
                     });
+                }, function (error) {
+                    hideSpinner();
+                    if (error.code == error.PERMISSION_DENIED) {
+                        $.alert("Vui lòng bật định vị lên để gửi.");
+                    } else {
+                        $.alert("Có lỗi xảy ra khi truy cập định vị: " + error.message);
+                    }
                 });
             });
         }
@@ -330,24 +337,24 @@
             });
         }
         function translateAndTrim(address) {
-                // Translate 'Ward' to 'Phường'
-                address = address.replace(/Ward/g, 'Phường');
+            // Translate 'Ward' to 'Phường'
+            address = address.replace(/Ward/g, 'Phường');
 
-                // Translate 'District' to 'Quận'
-                address = address.replace(/District/g, 'Quận');
+            // Translate 'District' to 'Quận'
+            address = address.replace(/District/g, 'Quận');
 
-                var cityIndex = address.indexOf('City');
-                var provinceIndex = address.indexOf('Province');
+            var cityIndex = address.indexOf('City');
+            var provinceIndex = address.indexOf('Province');
 
-                if (provinceIndex > cityIndex && cityIndex !== -1) {
-                    address = address.substring(0, provinceIndex).trim();
-                } else if (cityIndex !== -1) {
-                    address = address.substring(0, cityIndex).trim();
-                }
-                // Remove numbers greater than 3000
-                address = address.replace(/, \d{4,}/g, '');
-                return address;
+            if (provinceIndex > cityIndex && cityIndex !== -1) {
+                address = address.substring(0, provinceIndex).trim();
+            } else if (cityIndex !== -1) {
+                address = address.substring(0, cityIndex).trim();
             }
+            // Remove numbers greater than 3000
+            address = address.replace(/, \d{4,}/g, '');
+            return address;
+        }
         function SetAutoComplete() {
             showSpinner();
             $.get("/ReceiveBill/GetNameCustomer/", {}, function (data) {
@@ -357,4 +364,3 @@
         }
     </script>
 }
-

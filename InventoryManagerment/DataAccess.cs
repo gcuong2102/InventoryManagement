@@ -2994,7 +2994,7 @@ namespace InventoryManagerment
                 foreach (var url in images)
                 {
                     // Chỉnh sửa đường dẫn để chỉ lưu phần tương đối
-                    var relativePath = url.Replace(@"\\103.116.105.192", "");
+                    var relativePath = url.Replace(@"\\103.118.29.91", "");
 
                     var obj = new ReceiveBill()
                     {
@@ -3160,7 +3160,7 @@ namespace InventoryManagerment
                 var listImage = db.ReceiveBill.Where(x => x.Code == code).ToList();
                 var location = db.Location.Where(x => x.code == code).FirstOrDefault();
                 var path = listImage.FirstOrDefault().Url_Image;
-                string basePath = @"\\103.116.105.192\ReceivedBill";
+                string basePath = @"\\103.118.29.91\ReceivedBill";
                 var directoryPath = Path.Combine(basePath, path.Split(new string[] { @"\" }, StringSplitOptions.RemoveEmptyEntries)[1]);
                 if (Directory.Exists(directoryPath))
                 {
@@ -3401,7 +3401,7 @@ namespace InventoryManagerment
                 foreach (var url in listUrl)
                 {
                     // Chỉnh sửa đường dẫn để chỉ lưu phần tương đối
-                    var relativePath = url.Replace(@"\\103.116.105.192", "");
+                    var relativePath = url.Replace(@"\\103.118.29.91", "");
 
                     var obj = new ReceiveBill()
                     {

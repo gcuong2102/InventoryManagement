@@ -15,6 +15,10 @@ namespace InventoryManagerment.Controllers
         // GET: Export
         public ActionResult Index(string searchString,string nameProduct, string userName, string staffName,string note, DateTime? dateExport, int status = 2, int page = 1,int pageSize =10)
         {
+            if (GetUser().RoleID != 1)
+            {
+                return RedirectToAction("Index", "Error");
+            }
             User user = GetUser();
             TempData[Common.CommonConstants.PAGE_NAME] = "Phiếu xuất";
             ViewBag.Title = "Tuấn Hoan - Phiếu Xuất";
@@ -43,14 +47,7 @@ namespace InventoryManagerment.Controllers
             }
             ViewBag.pageSize = pageSize;
             var model = new DataAccess().ListAllExportOnPagedlist(searchString,note,nameProduct, staffName, userName, dateExport,stt, page, pageSize);
-            if (user.RoleID == 1)
-            {
-                return View(model);
-            }
-            else
-            {
-                return RedirectToAction("Index","Home");
-            }
+            return View(model);
         }
         [HttpGet]
         public ActionResult Create()

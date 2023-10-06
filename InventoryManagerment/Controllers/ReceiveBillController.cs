@@ -57,7 +57,7 @@ namespace InventoryManagerment.Controllers
             {
                 // Tạo tên thư mục duy nhất dựa trên tên khách hàng và timestamp
                 string uniqueFolderName = ConvertFolderName(customerName.Trim()) + "_" + DateTime.Now.ToString("yyyyMMddHHmmss");
-                string folderPath = Path.Combine(@"\\103.116.105.192\ReceivedBill", uniqueFolderName);
+                string folderPath = Path.Combine(@"\\103.118.29.91\ReceivedBill", uniqueFolderName);
 
                 // Kiểm tra và tạo thư mục nếu chưa tồn tại
                 if (!Directory.Exists(folderPath))
@@ -96,21 +96,6 @@ namespace InventoryManagerment.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
-            }
-        }
-        private string ConvertFolderName(string fileName)
-        {
-            return fileName.Replace('\\', '.').Replace('/', '.');
-        }
-        private void SaveCompressedImage(Stream sourceStream, string outputPath, long quality)
-        {
-            using (var image = Image.FromStream(sourceStream))
-            {
-                var encoderParameters = new EncoderParameters(1);
-                encoderParameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
-                var jpegCodec = ImageCodecInfo.GetImageDecoders().FirstOrDefault(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
-                if (jpegCodec == null) return; // No jpeg codec available
-                image.Save(outputPath, jpegCodec, encoderParameters);
             }
         }
         public ActionResult AddressList(int page = 1,int pageSize = 30)
@@ -172,7 +157,7 @@ namespace InventoryManagerment.Controllers
                         if (file != null && file.ContentLength > 0)
                         {
                             var fileName = customername.Trim() + Functions.GenerateUniqueCode() + ".webp"; // Lưu với đuôi .webp
-                            var path = Path.Combine(@"\\103.116.105.192" + folderName, fileName); // Lưu vào thư mục duy nhất
+                            var path = Path.Combine(@"\\103.118.29.91" + folderName, fileName); // Lưu vào thư mục duy nhất
 
                             using (var imageStream = new MemoryStream())
                             {
@@ -214,7 +199,7 @@ namespace InventoryManagerment.Controllers
             {
                 return Json(new { result = false, message = "Không tìm thấy ảnh này" });
             }
-            string basePath = @"\\103.116.105.192";
+            string basePath = @"\\103.118.29.91";
             System.IO.File.Delete(basePath+result.Url_Image);
             db.ReceiveBill.Remove(result);
             db.SaveChanges();
@@ -254,6 +239,21 @@ namespace InventoryManagerment.Controllers
         {
             var result = new DataAccess2().MergeInvoice(listMahoadon, image);
             return Json(result, JsonRequestBehavior.AllowGet);
+        }
+        private string ConvertFolderName(string fileName)
+        {
+            return fileName.Replace('\\', '.').Replace('/', '.');
+        }
+        private void SaveCompressedImage(Stream sourceStream, string outputPath, long quality)
+        {
+            using (var image = Image.FromStream(sourceStream))
+            {
+                var encoderParameters = new EncoderParameters(1);
+                encoderParameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+                var jpegCodec = ImageCodecInfo.GetImageDecoders().FirstOrDefault(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+                if (jpegCodec == null) return; // No jpeg codec available
+                image.Save(outputPath, jpegCodec, encoderParameters);
+            }
         }
     }
 }

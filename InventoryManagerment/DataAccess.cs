@@ -3160,7 +3160,7 @@ namespace InventoryManagerment
                 var listImage = db.ReceiveBill.Where(x => x.Code == code).ToList();
                 var location = db.Location.Where(x => x.code == code).FirstOrDefault();
                 var path = listImage.FirstOrDefault().Url_Image;
-                string basePath = @"\\103.118.29.91\ReceivedBill";
+                string basePath = @"\ReceivedBill";
                 var directoryPath = Path.Combine(basePath, path.Split(new string[] { @"\" }, StringSplitOptions.RemoveEmptyEntries)[1]);
                 if (Directory.Exists(directoryPath))
                 {

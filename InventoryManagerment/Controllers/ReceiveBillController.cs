@@ -45,6 +45,23 @@ namespace InventoryManagerment.Controllers
             {
                 ViewBag.pageSize = pageSize;
             }
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                ViewBag.customerName = customerName;
+            }
+            if (!string.IsNullOrEmpty(staffName))
+            {
+                ViewBag.staffName = staffName;
+            }
+            if (!string.IsNullOrEmpty(note))
+            {
+                ViewBag.note = note;
+            }
+            if (!string.IsNullOrEmpty(address))
+            {
+                ViewBag.address = address;
+            }
+
         }
         public ActionResult Post()
         {
@@ -57,8 +74,7 @@ namespace InventoryManagerment.Controllers
             {
                 // Tạo tên thư mục duy nhất dựa trên tên khách hàng và timestamp
                 string uniqueFolderName = ConvertFolderName(customerName.Trim()) + "_" + DateTime.Now.ToString("yyyyMMddHHmmss");
-                string folderPath = Path.Combine(@"\\103.118.29.91\ReceivedBill", uniqueFolderName);
-
+                string folderPath = Path.Combine(@"\ReceivedBill", uniqueFolderName);
                 // Kiểm tra và tạo thư mục nếu chưa tồn tại
                 if (!Directory.Exists(folderPath))
                 {
@@ -86,7 +102,6 @@ namespace InventoryManagerment.Controllers
                             }
                         }
                         listUrl.Add(path);
-
                     }
                 }
                 var username = GetUserName();
@@ -95,7 +110,7 @@ namespace InventoryManagerment.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = ex.Message}, JsonRequestBehavior.AllowGet);
             }
         }
         public ActionResult AddressList(int page = 1,int pageSize = 30)
@@ -152,12 +167,12 @@ namespace InventoryManagerment.Controllers
                 if (files != null)
                 {
                     var listUrl = new List<string>();
-                    foreach (var file in files)
+                    foreach (var file in files) 
                     {
                         if (file != null && file.ContentLength > 0)
                         {
-                            var fileName = customername.Trim() + Functions.GenerateUniqueCode() + ".webp"; // Lưu với đuôi .webp
-                            var path = Path.Combine(@"\\103.118.29.91" + folderName, fileName); // Lưu vào thư mục duy nhất
+                            var fileName = ConvertFolderName(customername.Trim()) + Functions.GenerateUniqueCode() + ".webp"; // Lưu với đuôi .webp
+                            var path = Path.Combine(folderName.Replace('/','\\'), fileName); // Lưu vào thư mục duy nhất
 
                             using (var imageStream = new MemoryStream())
                             {
@@ -180,30 +195,36 @@ namespace InventoryManagerment.Controllers
                 {
                     new DataAccess().UpdateInformationReceiveBill(code, time, customername, staff, note, address);
                 }
-                return Json(true, JsonRequestBehavior.AllowGet);
+                return Json(new {result = true,error = "" }, JsonRequestBehavior.AllowGet);
             }
-            catch
+            catch(Exception ex)
             {
-                return Json(false, JsonRequestBehavior.AllowGet);
+                return Json(new { result = false,error =ex.Message }, JsonRequestBehavior.AllowGet);
             }
             
         }
         [HttpPost]
         public JsonResult DeleteImage(string fileName, string code)
         {
-
-            var db = new InventoryDbContext();
-            string namePic = HttpUtility.UrlDecode(fileName);
-            var result = db.ReceiveBill.Where(x => x.Code == code && x.Url_Image.Contains(namePic)).FirstOrDefault();
-            if(result == null)
+            try
             {
-                return Json(new { result = false, message = "Không tìm thấy ảnh này" });
+                var db = new InventoryDbContext();
+                string namePic = HttpUtility.UrlDecode(fileName);
+                var result = db.ReceiveBill.Where(x => x.Code == code && x.Url_Image.Contains(namePic)).FirstOrDefault();
+                if (result == null)
+                {
+                    return Json(new { result = false, message = "Không tìm thấy ảnh này" });
+                }
+                System.IO.File.Delete(result.Url_Image);
+                db.ReceiveBill.Remove(result);
+                db.SaveChanges();
+                return Json(new { result = true, message = "Xóa ảnh thành công" }, JsonRequestBehavior.AllowGet);
             }
-            string basePath = @"\\103.118.29.91";
-            System.IO.File.Delete(basePath+result.Url_Image);
-            db.ReceiveBill.Remove(result);
-            db.SaveChanges();
-            return Json(new {result = true, message = "Xóa ảnh thành công"}, JsonRequestBehavior.AllowGet);
+            catch(Exception ex)
+            {
+                return Json(new { result = false, message = "Xóa ảnh thất bại" + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+
         }
         [HttpGet]
         public JsonResult CheckNameStaff(string nameStaff)

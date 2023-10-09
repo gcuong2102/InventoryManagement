@@ -459,7 +459,9 @@
                 $.each(data.listInvoiceCode, function (index, data) {
                     $("#invoiceIcon").html('<a target="_blank" href="/Bill?billCode=' + data + '"> <i class="material-icons align-middle mb-1">check_circle</i></a>');
                 })
-
+            }
+            else {
+                $("#invoiceIcon").html('');
             }
             document.getElementById('description').textContent = location.description;
             document.getElementById('username').textContent = data.NameStaff;
@@ -496,7 +498,6 @@
                         text: 'Đồng ý',
                         key: ['enter'],
                         action: function () {
-                            console.log($('#confirmDelete'))
                             if ($('#confirmDelete').is(":checked")) {
                                 $.post("/ReceiveBill/Delete/", { code: code }, function (result) {
                                     if (result.result) {
@@ -744,7 +745,6 @@
             $('#FilterCustomerName').on('input', function () {
                 // Lấy giá trị từ ô input và chuyển thành chữ thường
                 const searchText = $(this).val().toLowerCase();
-                console.log(searchText)
                 // Duyệt qua từng thẻ div có class là 'hoadon'
                 $('.hoadon').each(function () {
                     // Lấy nội dung của thẻ h6 có class là 'customerName' và chuyển thành chữ thường
@@ -890,14 +890,26 @@
                             processData: false,
                             contentType: false,
                             success: function (data) {
-                                $.get("/ReceiveBill/GetImagesByDirectory/", { code: $("#btnDelete").attr('data-spcode') }, function (result) {
-                                    updateModal(result)
-                                    $('#detailModal').modal('show');
-                                });
-                                afterSave();
-                                selectedFiles = [];
-                                $.alert('Cập nhật thành công', 'Thông Báo')
-                                hideSpinner();
+                                if (data.result) {
+                                    $.get("/ReceiveBill/GetImagesByDirectory/", { code: $("#btnDelete").attr('data-spcode') }, function (result) {
+                                        updateModal(result)
+                                        $('#detailModal').modal('show');
+                                    });
+                                    afterSave();
+                                    selectedFiles = [];
+                                    $.alert('Cập nhật thành công', 'Thông Báo')
+                                    hideSpinner();
+                                } else {
+                                    $.get("/ReceiveBill/GetImagesByDirectory/", { code: $("#btnDelete").attr('data-spcode') }, function (result) {
+                                        updateModal(result)
+                                        $('#detailModal').modal('show');
+                                    });
+                                    afterSave();
+                                    selectedFiles = [];
+                                    $.alert('Cập nhật thất bại' + data.error, 'Thông Báo')
+                                    hideSpinner();
+                                }
+                                
                             },
                             error: function (error) {
                                 console.error(error);

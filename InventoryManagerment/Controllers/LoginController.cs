@@ -26,7 +26,6 @@ namespace InventoryManagerment.Controllers
                     HttpCookie userCookie = new HttpCookie(Common.CommonConstants.USER_DATA);
                     var user = functions.GetUser(model.UserName);
                     userCookie[Common.CommonConstants.USER_NAME] = user.UserName;
-                    userCookie[Common.CommonConstants.NAME_USER] = user.Name;
                     userCookie[Common.CommonConstants.ROLE_ID] = user.RoleID.ToString();
                     userCookie[CommonConstants.User_ID] = user.ID.ToString();
                     userCookie.Expires = DateTime.Now.AddMonths(1);

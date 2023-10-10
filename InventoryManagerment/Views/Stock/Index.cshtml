@@ -138,6 +138,7 @@
                         <h6 class="mb-0 text-white text-capitalize ps-3">Danh sách sản phẩm trong kho</h6>
                     </div>
                     <div class="col-6 text-end">
+                        <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" onclick="refreshParameter()"><i class="material-icons">refresh</i></a>
                         <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="material-icons">search</i></a>
                         <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" data-bs-toggle="modal" data-bs-target="#excelModal"><i class="material-icons">file_download</i></a>
                     </div>
@@ -285,12 +286,15 @@
                             }
                         </tbody>
                     </table>
-                    <div style="text-align:center;margin-top:15px;">
-                        <div style="display:inline-block" id="listPagination">
-                            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, quantity = ViewBag.quantity, typeProduct = ViewBag.typeProduct, pageSize = ViewBag.pageSize }))
-                        </div>
-                    </div>
+
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="overflow-auto" style="text-align:center;margin-top:15px;">
+            <div style="display:inline-block" id="listPagination">
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, quantity = ViewBag.quantity, typeProduct = ViewBag.typeProduct, pageSize = ViewBag.pageSize }))
             </div>
         </div>
     </div>

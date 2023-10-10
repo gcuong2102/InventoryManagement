@@ -560,6 +560,7 @@
     <Compile Include="ViewModel\ExportAutoComplete.cs" />
     <Compile Include="ViewModel\ExportModel.cs" />
     <Compile Include="ViewModel\ExportViewModel.cs" />
+    <Compile Include="ViewModel\HomeViewModel.cs" />
     <Compile Include="ViewModel\ImportAutoComplete.cs" />
     <Compile Include="ViewModel\ImportDataViewModel.cs" />
     <Compile Include="ViewModel\ImportModel.cs" />
@@ -577,7 +578,7 @@
     <Content Include="Views\Login\Index.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
-    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Home\AdminIndex.cshtml" />
     <Content Include="Views\Shared\topNav.cshtml" />
     <Content Include="Views\Shared\leftMenu.cshtml" />
     <Content Include="Views\Product\Index.cshtml" />
@@ -635,6 +636,7 @@
     <Content Include="Views\ReceiveBill\Post.cshtml" />
     <Content Include="Views\ReceiveBill\Index.cshtml" />
     <Content Include="Views\ReceiveBill\AddressList.cshtml" />
+    <Content Include="Views\Home\StaffIndex.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

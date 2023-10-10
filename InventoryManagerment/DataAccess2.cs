@@ -171,7 +171,7 @@ namespace InventoryManagerment
             };
             return result;
         }
-        public IEnumerable<BillViewModel> ListAllHoaDonToPagedList(string billCode, string searchString, string nameProduct, string totalPrice, DateTime? dateBill, int page, int pageSize)
+        public IPagedList<BillViewModel> ListAllHoaDonToPagedList(string billCode, string searchString, string nameProduct, string totalPrice, DateTime? dateBill, int page, int pageSize)
         {
             string date = FormatDate(dateBill);
             double price = ParsePrice(totalPrice);
@@ -190,7 +190,6 @@ namespace InventoryManagerment
                             Detail = detail
                         };
 
-            // Thêm điều kiện cho billCode
             if (!string.IsNullOrEmpty(billCode))
             {
                 query = query.Where(q => q.Bill.MAHOADON == billCode);
@@ -198,8 +197,8 @@ namespace InventoryManagerment
 
             var groupedQuery = from q in query
                                group q by q.Bill.MAHOADON into grouped
-                               let firstItem = grouped.FirstOrDefault() // Use let to get the first item
-                               where firstItem != null // Ensure that the first item isn't null
+                               let firstItem = grouped.FirstOrDefault()
+                               where firstItem != null
                                select new BillViewModel()
                                {
                                    MAHOADON = grouped.Key,
@@ -211,13 +210,19 @@ namespace InventoryManagerment
                                    TONGTIEN = firstItem.Bill.TONGTIEN
                                };
 
-            var ketqua = groupedQuery
-                         .ToList() // Thực thi truy vấn và lấy dữ liệu
-                         .OrderByDescending(x => ParseNgayBanToSortableString(x.NGAYBAN))
-                         .ToPagedList(page, pageSize);
+            // Thực thi truy vấn và lấy dữ liệu vào bộ nhớ
+            var inMemoryResults = groupedQuery.ToList();
 
-            return ketqua;
+            // Sắp xếp dữ liệu trong ứng dụng
+            var sortedResults = inMemoryResults
+                                .OrderByDescending(x => ParseNgayBanToSortableString(x.NGAYBAN))
+                                .ToList();
+
+            // Phân trang dữ liệu
+            return sortedResults.ToPagedList(page, pageSize);
         }
+
+
         private string FormatDate(DateTime? dateBill)
         {
             return dateBill?.ToString("'Ngày' dd 'Tháng' MM 'Năm' yyyy") ?? "Ngày";

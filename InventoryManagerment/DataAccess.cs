@@ -19,6 +19,11 @@ using ImageMagick;
 using System.Drawing.Printing;
 using System.Web.UI;
 using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
+using System.Web.Helpers;
+using System.Data.Entity;
+using System.Threading.Tasks;
+using Org.BouncyCastle.Utilities;
+using MySqlX.XDevAPI.Common;
 
 namespace InventoryManagerment
 {
@@ -34,7 +39,7 @@ namespace InventoryManagerment
         //Kiểm tra đăng nhập
         public int CheckUser(LoginModel model)
         {
-            var user = db.Users.Where(x => x.UserName == model.UserName).SingleOrDefault();
+            var user = db.Users.Where(x => x.UserName == model.UserName).FirstOrDefault();
             if (user == null)
             {
                 return -1;
@@ -83,7 +88,7 @@ namespace InventoryManagerment
         {
             if (userName != "")
             {
-                return db.Users.Where(x => x.UserName == userName).SingleOrDefault();
+                return db.Users.Where(x => x.UserName == userName).FirstOrDefault();
             }
             else
             {
@@ -1448,131 +1453,49 @@ namespace InventoryManagerment
         }
         //---------------------------------------------------------------------------------------------------------------------------------
         //Chức năng phiếu xuất
-        public IEnumerable<ExportViewModel> ListAllExportOnPagedlist(string searchString,string note,string nameProduct,string staffName,string userName, DateTime? dateExport, bool? statusExoport, int page, int pageSize)
+        public async Task<IPagedList<ExportViewModel>> ListAllExportOnPagedlistAsync(string searchString, string note, string nameProduct, string staffName, string userName, DateTime? dateExport, bool? statusExoport, int page, int pageSize)
         {
-            if (!string.IsNullOrEmpty(searchString))
+            // Initialize and trim search parameters
+            searchString = searchString?.Trim() ?? "";
+            note = note?.Trim() ?? "";
+            nameProduct = nameProduct?.Trim() ?? "";
+            staffName = staffName?.Trim() ?? "";
+            userName = userName?.Trim() ?? "";
+
+            // Base query with projection
+            IQueryable<ExportViewModel> query = from export in db.Exports
+                                                join customer in db.Customers on export.CustomerCode equals customer.CustomerCode
+                                                join supply in db.ExportDetails on export.Code equals supply.ExportCode
+                                                join product in db.Products on supply.ProductCode equals product.Code
+                                                join users in db.Users on export.UserID equals users.ID
+                                                select new ExportViewModel()
+                                                {
+                                                    Code = export.Code,
+                                                    CustomerName = customer.Name,
+                                                    Time = export.Time,
+                                                    Status = export.Status,
+                                                    NameUser = users.Name,
+                                                    Note = export.Note,                                                
+                                                };
+
+            // Apply filters
+            if (statusExoport.HasValue)
             {
-                searchString = searchString.Trim();
+                query = query.Where(x => x.Status == statusExoport.Value);
             }
-            else
+            if (dateExport.HasValue)
             {
-                searchString = "";
+                query = query.Where(x => x.Time.Year == dateExport.Value.Year && x.Time.Month == dateExport.Value.Month && x.Time.Day == dateExport.Value.Day);
             }
-            if (!string.IsNullOrEmpty(note))
-            {
-                note = note.Trim();
-            }
-            else
-            {
-                note = "";
-            }
-            if (!string.IsNullOrEmpty(nameProduct))
-            {
-                nameProduct = nameProduct.Trim();
-            }
-            else
-            {
-                nameProduct = "";
-            }
-            if (!string.IsNullOrEmpty(staffName))
-            {
-                staffName = staffName.Trim();
-            }
-            else
-            {
-                staffName = "";
-            }
-            if (!string.IsNullOrEmpty(userName))
-            {
-                userName = userName.Trim();
-            }
-            else
-            {
-                userName = "";
-            }
-            if (dateExport.HasValue && statusExoport.HasValue)
-            {
-                var result = (from export in db.Exports
-                             join customer in db.Customers on export.CustomerCode equals customer.CustomerCode
-                             join supply in db.ExportDetails on export.Code equals supply.ExportCode
-                             join product in db.Products on supply.ProductCode equals product.Code
-                             join users in db.Users on export.UserID equals users.ID
-                             where export.Note.Contains(note) && customer.Name.Contains(searchString) && users.Name.Contains(userName) && product.Name.Contains(nameProduct) && export.Status == statusExoport.Value && export.Time.Year == dateExport.Value.Year && export.Time.Month == dateExport.Value.Month && export.Time.Day == dateExport.Value.Day && export.ExportDelete == false
-                             select new ExportViewModel()
-                             {
-                                 Code = export.Code,
-                                 CustomerName = customer.Name,
-                                 Note = export.Note,
-                                 Time = export.Time,
- 
-                                 ExportDelete = export.ExportDelete,
-                                 NameUser = users.Name,
-                                 Status = export.Status
-                             }).Distinct();
-                return result.OrderByDescending(x => x.Time).ToPagedList(page, pageSize);
-            }
-            else if (!dateExport.HasValue && statusExoport.HasValue)
-            {
-                var result = (from export in db.Exports
-                             join customer in db.Customers on export.CustomerCode equals customer.CustomerCode
-                             join supply in db.ExportDetails on export.Code equals supply.ExportCode
-                             join product in db.Products on supply.ProductCode equals product.Code
-                             join users in db.Users on export.UserID equals users.ID
-                             where export.Note.Contains(note) && customer.Name.Contains(searchString) && users.Name.Contains(userName) && product.Name.Contains(nameProduct) && export.ExportDelete == false && export.Status == statusExoport.Value
-                             select new ExportViewModel()
-                             {
-                                 Code = export.Code,
-                                 CustomerName = customer.Name,
-                                 Note = export.Note,
-                                 Time = export.Time,
-  
-                                 ExportDelete = export.ExportDelete,
-                                 NameUser = users.Name,
-                                 Status = export.Status
-                             }).Distinct();
-                return result.OrderByDescending(x => x.Time).ToPagedList(page, pageSize);
-            }
-            else if (dateExport.HasValue && !statusExoport.HasValue)
-            {
-                var result = (from export in db.Exports
-                             join customer in db.Customers on export.CustomerCode equals customer.CustomerCode
-                             join supply in db.ExportDetails on export.Code equals supply.ExportCode
-                             join product in db.Products on supply.ProductCode equals product.Code
-                             join users in db.Users on export.UserID equals users.ID                           
-                             where export.Note.Contains(note) && customer.Name.Contains(searchString) && users.Name.Contains(userName) && product.Name.Contains(nameProduct) && export.Time.Year == dateExport.Value.Year && export.Time.Month == dateExport.Value.Month && export.Time.Day == dateExport.Value.Day && export.ExportDelete == false
-                             select new ExportViewModel()
-                             {
-                                 Code = export.Code,
-                                 CustomerName = customer.Name,
-                                 Note = export.Note,
-                                 Time = export.Time,
-                                 ExportDelete = export.ExportDelete,
-                                 NameUser = users.Name,
-                                 Status = export.Status
-                             }).Distinct();
-                return result.OrderByDescending(x => x.Time).ToPagedList(page, pageSize);
-            }
-            else
-            {
-                var result = (from export in db.Exports
-                             join customer in db.Customers on export.CustomerCode equals customer.CustomerCode
-                             join supply in db.ExportDetails on export.Code equals supply.ExportCode
-                             join product in db.Products on supply.ProductCode equals product.Code
-                             join users in db.Users on export.UserID equals users.ID
-                             where export.Note.Contains(note) && customer.Name.Contains(searchString) && users.Name.Contains(userName) && product.Name.Contains(nameProduct) && export.ExportDelete == false
-                             select new ExportViewModel()
-                             {
-                                 Code = export.Code,
-                                 CustomerName = customer.Name,
-                                 Note = export.Note,
-                                 Time = export.Time,
-                                 ExportDelete = export.ExportDelete,
-                                 NameUser = users.Name,
-                                 Status = export.Status
-                             }).Distinct();
-            return result.OrderByDescending(x=>x.Time).ToPagedList(page,pageSize);
-            }
+            query = query.Where(x => x.CustomerName.Contains(searchString) && x.Note.Contains(note));
+
+            // Distinct and sort
+            query = query.Distinct().OrderByDescending(x => x.Time);
+
+            // Execute query and return paged list
+            return query.OrderByDescending(x => x.Time).ToPagedList(page, pageSize);
         }
+
         public ExportForm GetExportForm(long id)
         {
             var exportForm = new ExportForm();
@@ -3436,6 +3359,134 @@ namespace InventoryManagerment
             {
                
             }
+        }
+        async Task<double> GetDoanhThuTheoThangAsync(int thang)
+        {
+            double? doanhthu = await db.Exports
+                .Where(x => x.Time.Year == DateTime.Now.Year && x.Time.Month == thang && x.ExportDelete == false)
+                .Join(db.ExportDetails, export => export.Code, detail => detail.ExportCode, (export, detail) => new { detail.Price, detail.Quantity })
+                .SumAsync(x => (double?)x.Price * x.Quantity);
+
+            double? refunds = await db.Refunds
+                .Where(x => x.Time.Year == DateTime.Now.Year && x.Time.Month == thang && x.RefundDelete == false)
+                .Join(db.RefundDetails, refund => refund.Code, detail => detail.RefundCode, (refund, detail) => new { detail.Price, detail.Quantity })
+                .SumAsync(x => (double?)x.Price * x.Quantity);
+            double? imports = await db.Imports
+               .Where(x => x.Time.Year == DateTime.Now.Year && x.Time.Month == thang && x.ImportDelete == false)
+               .Join(db.ImportDetails, import => import.Code, detail => detail.ImportCode, (import, detail) => new { detail.ImportPrice, detail.Quantity })
+               .SumAsync(x => (double?)x.ImportPrice * x.Quantity);
+            return (doanhthu ?? 0) - (refunds ?? 0) - (imports ?? 0);
+        }
+        async Task<double> GetChiTieuTheoThangAsync(int thang)
+        {
+            double? imports = await db.Imports
+               .Where(x => x.Time.Year == DateTime.Now.Year && x.Time.Month == thang && x.ImportDelete == false)
+               .Join(db.ImportDetails, import => import.Code, detail => detail.ImportCode, (import, detail) => new { detail.ImportPrice, detail.Quantity })
+               .SumAsync(x => (double?)x.ImportPrice * x.Quantity);
+            return (imports ?? 0);
+        }
+        public async Task<double[]> DoanhThuTheoThang()
+        {
+            List<Task<double>> tasks = new List<Task<double>>();
+            for (int i = 1; i <= 12; i++)
+            {
+                tasks.Add(GetDoanhThuTheoThangAsync(i));
+            }
+
+            double[] results = await Task.WhenAll(tasks);
+            // results[i] sẽ chứa doanh thu của tháng i+1
+            return results;
+        }
+        public async Task<double[]> ChitieuTheoThang()
+        {
+            List<Task<double>> tasks = new List<Task<double>>();
+            for (int i = 1; i <= 12; i++)
+            {
+                tasks.Add(GetChiTieuTheoThangAsync(i));
+            }
+
+            double[] results = await Task.WhenAll(tasks);
+            // results[i] sẽ chứa doanh thu của tháng i+1
+            return results;
+        }
+        public async Task<double[]> LoiNhuanTheoThang()
+        {
+            double[] doanhthu = await DoanhThuTheoThang();
+            double[] chitieu = await ChitieuTheoThang();
+            double[] result = new double[doanhthu.Length];
+
+            for (int i = 0; i < doanhthu.Length; i++)
+            {
+                result[i] = doanhthu[i] - chitieu[i];
+            }
+            return result;
+        }
+        public HomeViewModel GetDataForHome()
+        {
+            DateTime today = DateTime.Today.Date;
+            DateTime yesterday = today.AddDays(-1).Date;
+            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+            DateTime endOfWeek = startOfWeek.AddDays(6);
+            int currentMonth = today.Month;
+            int currentYear = today.Year;
+
+            // Fetch the data once and then calculate the totals for Export
+            var exportQuery = from e in db.Exports
+                              join ed in db.ExportDetails on e.Code equals ed.ExportCode
+                              where !ed.ExportDetailDelete
+                              select new { Time = e.Time, Total = (double?)ed.Price * ed.Quantity };
+
+            // Fetch the data once and then calculate the totals for Import
+            var importQuery = from i in db.Imports
+                              join id in db.ImportDetails on i.Code equals id.ImportCode
+                              where !id.ImportDetailDelete
+                              select new { Time = i.Time, Total = (double?)id.ImportPrice * id.Quantity };
+
+            // Calculate totals for Export
+            double? exportTotalPriceToday = exportQuery.Where(x => x.Time.Day == today.Day && x.Time.Month == today.Month && x.Time.Year == today.Year).Sum(x => x.Total);
+            double? exportTotalPriceYesterday = exportQuery.Where(x => x.Time.Day == yesterday.Day && x.Time.Month == yesterday.Month && x.Time.Year == yesterday.Year).Sum(x => x.Total);
+            double? exportTotalPriceWeek = exportQuery.Where(x => x.Time >= startOfWeek && x.Time <= endOfWeek).Sum(x => x.Total);
+            double? exportTotalPriceMonth = exportQuery.Where(x => x.Time.Month == currentMonth && x.Time.Year == currentYear).Sum(x => x.Total);
+
+            // Calculate totals for Import
+            double? importTotalPriceToday = importQuery.Where(x => x.Time.Day == today.Day && x.Time.Month == today.Month && x.Time.Year == today.Year).Sum(x => x.Total);
+            double? importTotalPriceYesterday = importQuery.Where(x => x.Time.Day == yesterday.Day && x.Time.Month == yesterday.Month && x.Time.Year == yesterday.Year).Sum(x => x.Total);
+            double? importTotalPriceWeek = importQuery.Where(x => x.Time >= startOfWeek && x.Time <= endOfWeek).Sum(x => x.Total);
+            double? importTotalPriceMonth = importQuery.Where(x => x.Time.Month == currentMonth && x.Time.Year == currentYear).Sum(x => x.Total);
+
+            // Count records for Export
+            int exportCountToday = db.Exports.Count(x => x.Time.Day == today.Day && x.Time.Month == today.Month && x.Time.Year == today.Year && x.ExportDelete == false);
+            int exportCountYesterday = db.Exports.Count(x => x.Time.Day == yesterday.Day && x.Time.Month == yesterday.Month && x.Time.Year == yesterday.Year && x.ExportDelete == false);
+            int exportCountWeek = db.Exports.Count(x => x.Time >= startOfWeek && x.Time <= endOfWeek && x.ExportDelete == false);
+
+            // Count records for Import
+            int importCountToday = db.Imports.Count(x => x.Time.Day == today.Day && x.Time.Month == today.Month && x.Time.Year == today.Year && x.ImportDelete == false);
+            int importCountYesterday = db.Imports.Count(x => x.Time.Day == yesterday.Day && x.Time.Month == yesterday.Month && x.Time.Year == yesterday.Year && x.ImportDelete == false);
+            int importCountWeek = db.Imports.Count(x => x.Time >= startOfWeek && x.Time <= endOfWeek && x.ImportDelete == false);
+
+
+
+            HomeViewModel homeViewModel = new HomeViewModel()
+            {
+                doanhthuhomnay = exportTotalPriceToday,
+                doanhthuhomqua = exportTotalPriceYesterday,
+                doanhthutuannay = exportTotalPriceWeek,
+                doanhthutheothang = exportTotalPriceMonth,
+                chitieutheothang = importTotalPriceMonth,
+                tongchihomnay = importTotalPriceToday,
+                tongchihomqua = importTotalPriceYesterday,
+                tongchituannay = importTotalPriceWeek,
+                loinhuantheothang = exportTotalPriceMonth - importTotalPriceMonth,
+                sosanhchitieutheongay = importTotalPriceToday - importTotalPriceYesterday,
+                sosanhdoanhthutheongay = exportTotalPriceToday - exportTotalPriceYesterday,
+                soluongphieunhaphomnay = importCountToday,
+                soluongphieunhaphomqua = importCountYesterday,
+                soluongphieunhaptrongtuan = importCountWeek,
+                soluongphieuxuathomnay = exportCountToday,
+                soluongphieuxuathomqua = exportCountYesterday,
+                soluongphieuxuattrongtuan = exportCountWeek,
+            };
+            return homeViewModel;
         }
     }
 }

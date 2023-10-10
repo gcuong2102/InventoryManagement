@@ -5,6 +5,7 @@ using InventoryManagerment.Models.ModelProduct;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 
@@ -13,7 +14,7 @@ namespace InventoryManagerment.Controllers
     public class ExportController : BaseController
     {
         // GET: Export
-        public ActionResult Index(string searchString,string nameProduct, string userName, string staffName,string note, DateTime? dateExport, int status = 2, int page = 1,int pageSize =10)
+        public async Task<ActionResult> Index(string searchString,string nameProduct, string userName, string staffName,string note, DateTime? dateExport, int status = 2, int page = 1,int pageSize =10)
         {
             if (GetUser().RoleID != 1)
             {
@@ -46,7 +47,7 @@ namespace InventoryManagerment.Controllers
                 ViewBag.dateExport = dateExport.Value.ToString("yyyy-MM-dd");
             }
             ViewBag.pageSize = pageSize;
-            var model = new DataAccess().ListAllExportOnPagedlist(searchString,note,nameProduct, staffName, userName, dateExport,stt, page, pageSize);
+            var model = await new DataAccess().ListAllExportOnPagedlistAsync(searchString,note,nameProduct, staffName, userName, dateExport,stt, page, pageSize);
             return View(model);
         }
         [HttpGet]

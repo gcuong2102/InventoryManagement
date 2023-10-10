@@ -1,0 +1,248 @@
+﻿@using PagedList.Mvc;
+@using PagedList;
+@using InventoryManagerment.Models.EF;
+@using InventoryManagerment.Common;
+@model IPagedList<InventoryManagerment.Models.EF.Product>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var user = (User)ViewBag.User;
+    var db = new InventoryDbContext();
+    var categoryList = (IPagedList<InventoryManagerment.Models.EF.ProductCategory>)ViewBag.ListProductCategory;
+    var pagelist = (List<InventoryManagerment.Models.EF.Export>)ViewBag.ListExport;
+    var listExport = db.Exports;
+    var listCategory = db.ProductCategories;
+    var listProduct = db.Products;
+    var listExportDetail = db.ExportDetails;
+    string addListProduct()
+    {
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        sb.Append("<script>");
+        sb.Append(" var dataProduct = new Array();");
+        foreach (var item in listProduct)
+        {
+            sb.Append($" dataProduct.push('{item.Name}');");
+        }
+        sb.Append(" </script>");
+        return sb.ToString();
+    }
+    string GetProductName(long? CategoryID, string NameProduct, long? PackageID)
+    {
+        return db.ProductCategories.Find(CategoryID).Name + " | " + NameProduct + " | " + db.Packages.Find(PackageID).Name;
+    }
+    string GetUnitName(long? id = null)
+    {
+        if (id.HasValue)
+        {
+            var category = db.Units.Find(id);
+            if (category != null)
+            {
+                return category.Name;
+            }
+            else { return ""; }
+
+        }
+        else
+        {
+            return "";
+        }
+
+    }
+    string GetClass(double quantity, long? quantityAlert)
+    {
+        string classstring = "";
+        if (quantity >= (quantityAlert + quantityAlert / 4))
+        {
+            classstring = "bg-row-success";
+        }
+        else if (quantity >= (quantityAlert - quantityAlert / 4) && quantity < (quantityAlert + quantityAlert / 4))
+        {
+            classstring = "bg-row-warning";
+        }
+        else if (quantity < (quantityAlert - quantityAlert / 4))
+        {
+            classstring = "bg-row-danger";
+        }
+        if (quantityAlert == 0 || quantityAlert == null)
+        {
+            classstring = "";
+        }
+        return classstring;
+    }
+}
+    <style>
+        .bg-row-success {
+            color: white !important;
+            background-color: #bce2be;
+        }
+
+        .bg-row-danger {
+            color: white !important;
+            background-color: #fcd3d0;
+        }
+
+        .bg-row-warning {
+            color: white !important;
+            background-color: #ffd59f;
+        }
+    </style>
+    <div class="row" id="productList">
+        <div class="col-12">
+            <div class="card my-4">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="row bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                        <div class="col-6">
+                            <h6 class="mb-0 text-white text-capitalize ps-3">Danh sách sản phẩm trong kho</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <a onclick="refreshParameter()" class="btn bg-gradient-dark mb-0 text-white text-capitalize"><i class="material-icons">refresh</i></a> 
+                            <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="material-icons">search</i></a>
+                            <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" data-bs-toggle="modal" data-bs-target="#excelModal"><i class="material-icons">file_download</i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-2">
+                    <div class="px-2 mb-1">
+                        <!-- Modal -->
+                        <div class="modal fade" id="excelModal" tabindex="-1" role="dialog" aria-labelledby="searchtitleModal" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title font-weight-normal" id="searchtitleModal">Xuất File Excel</h5>
+                                        <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        @using (Html.BeginForm("ExportDataProduct", "Home", method: FormMethod.Post))
+                                        {
+                                            <div class="input-group mb-3">
+                                                <div class="input-group input-group-static mb-4">
+                                                    <label class="ms-0">Tên sản phẩm</label>
+                                                    <input placeholder="Nhập tên sản phẩm" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" id="searchString" value="@ViewBag.searchString" name="searchString">
+                                                </div>
+                                                <div class="input-group input-group-static mb-4">
+                                                    <label class="ms-0">Loại sản phẩm</label>
+                                                    <select class="form-control" name="typeProduct" id="typeProduct" value="@ViewBag.typeProduct">
+                                                        <option value="0">Tất cả</option>
+                                                        @foreach (var item in listCategory)
+                                                        {
+                                                            <option value="@item.ID">@item.Name</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="form-check p-0">
+                                                    <input class="form-check-input" type="checkbox" value="true" id="txtIsOrder" name="txtIsOrder">
+                                                    <label class="custom-control-label" for="txtIsOrder">Bao gồm hàng đặt</label>
+                                                </div>
+                                                <div class="input-group input-group-static mb-4">
+                                                    <label class="ms-0">Số lượng sản phẩm</label>
+                                                    <select id="quantity" name="quantity" class="form-control">
+                                                        <option value="0">Tất cả</option>
+                                                        <option value="1">Gần Hết</option>
+                                                        <option value="2">Hết</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button id="btnSearch" type="submit" class="btn btn-icon btn-3 btn-outline-primary input-group-outline input-group-text">
+                                                <span class="btn-inner--icon"><i class="material-icons">file_download</i></span>
+                                                <span class="btn-inner--text">Xuất File Excel</span>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchtitleModal" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title font-weight-normal" id="searchtitleModal">Tìm kiếm sản phẩm</h5>
+                                        <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        @using (Html.BeginForm("Index", "Home", method: FormMethod.Get))
+                                        {
+                                            <div class="input-group mb-3">
+                                                <div class="input-group input-group-static mb-4">
+                                                    <input id="txtProduct" placeholder="Nhập tên sản phẩm" type="text" class="form-control" onfocus="focused(this)" onfocusout="defocused(this)" value="@ViewBag.searchString" name="searchString">
+                                                </div>
+                                                <div class="input-group input-group-static mb-4">
+                                                    <label for="ActionKey" class="ms-0">Loại Sản Phẩm</label>
+                                                    <select class="form-control" name="typeProduct" id="typeProduct" value="@ViewBag.typeProduct">
+                                                        <option value="0">Tất cả</option>
+                                                        @foreach (var item in listCategory)
+                                                        {
+                                                            <option value="@item.ID">@item.Name</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="input-group input-group-static mb-4">
+                                                    <select name="pageSize" class="form-control">
+                                                        <option value="10">Số dòng hiển thị</option>
+                                                        @for (int a = 15; a <= 100; a += 5)
+                                                        {
+                                                            <option value="@a">@a</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button id="btnSearch" type="submit" class="btn btn-icon btn-3 btn-outline-primary input-group-outline input-group-text">
+                                                <span class="btn-inner--icon"><i class="material-icons">search</i></span>
+                                                <span class="btn-inner--text">Tìm kiếm</span>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder">Tên sản phẩm</th>
+                                    <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder">Số lượng tồn</th>
+                                    <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder">Đơn vị tính</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                <tr class="@GetClass(item.Quantity,item.QuantityAlert)" id="row_@item.ID">
+                                    <td class="align-middle">
+                                        <span class="text-secondary text-xs font-weight-bold">@GetProductName(item.CategoryID, item.Name, item.PackageID)</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">@item.Quantity</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">@GetUnitName(item.UnitID)</span>
+                                    </td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="overflow-auto" style="text-align:center;margin-top:15px;">
+                <div style="display:inline-block" id="listPagination">
+                    @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, typeProduct = ViewBag.typeProduct, pageSize = ViewBag.pageSize }))
+                </div>
+            </div>
+        </div>
+    </div>
+@section jsFooter{
+    @Html.Raw(addListProduct())
+    <script>
+        $(document).ready(function () {
+            AutoComplete(dataProduct, $("#txtProduct"))
+            addClasslist();
+        });
+    </script>
+}
+

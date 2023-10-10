@@ -3,6 +3,8 @@ using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 
@@ -15,13 +17,34 @@ namespace InventoryManagerment.Controllers
         {
             ViewBag.Title = "Tuấn Hoan - Dash Board";
             TempData[Common.CommonConstants.PAGE_NAME] = "Trang chủ";
-            ViewBag.User = new DataAccess().GetUser(GetUserName());
-            ViewBag.searchString = searchString;
-            ViewBag.typeProduct = typeProduct;
-            ViewBag.page = page;
-            ViewBag.pageSize = pageSize;
-            var model = new DataAccess().ListAllProductOnPagedlist(searchString,quantity, typeProduct, page, pageSize);
-            return View(model);
+            ViewBag.User = GetUser();
+            long roleId = GetUser().RoleID;
+            if (roleId == 1)
+            {
+                var dataForAdmin = new DataAccess().GetDataForHome();
+                return View("AdminIndex",dataForAdmin);
+            }
+            else
+            {
+                ViewBag.searchString = searchString;
+                ViewBag.typeProduct = typeProduct;
+                ViewBag.page = page;
+                ViewBag.pageSize = pageSize;
+
+                var model = new DataAccess().ListAllProductOnPagedlist(searchString, quantity, typeProduct, page, pageSize);
+                return View("StaffIndex",model);
+            }      
+        }
+        [HttpGet]
+        public async Task<JsonResult> GetDataChart()
+        {
+            var result = new
+            {
+                doanhthutheothang = await new DataAccess().DoanhThuTheoThang(),
+                chitieutheothang = await new DataAccess().ChitieuTheoThang(),
+                loinhuantheothang = await new DataAccess().LoiNhuanTheoThang()
+            };
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
         public ActionResult Test()
         {

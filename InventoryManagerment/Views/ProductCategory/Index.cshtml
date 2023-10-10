@@ -14,6 +14,7 @@
                         <h6 class="mb-0 text-white text-capitalize ps-3">Danh sách loại sản phẩm</h6>
                     </div>
                     <div class="col-6 text-end">
+                        <a onclick="refreshParameter()" class="btn bg-gradient-dark mb-0 text-white text-capitalize"><i class="material-icons">refresh</i></a>
                         <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="material-icons">search</i></a>
                         <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" href="../ProductCategory/CreateProductCategory"><i class="material-icons text-sm">add</i></a>
                     </div>
@@ -96,7 +97,7 @@
                         </tbody>
                     </table>
                     <div style="text-align:center">
-                        <div style="display:inline-block" id="listPaginationProductType">
+                        <div style="display:inline-block" id="listPagination">
                             @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString,pageSize = ViewBag.pageSize }))
                         </div>
                     </div>

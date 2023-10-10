@@ -228,12 +228,14 @@
                             }
                         </tbody>
                     </table>
-                    <div style="text-align:center">
-                        <div id="listPagination" style="display:inline-block">
-                            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, note = ViewBag.note, nameProduct = ViewBag.nameProduct, userName = ViewBag.userName, staffName = ViewBag.staffName, dateExport = ViewBag.dateExport, status = ViewBag.status, pageSize = ViewBag.pageSize }))
-                        </div>
-                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 overflow-auto">
+        <div style="text-align:center">
+            <div id="listPagination" style="display:inline-block">
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, note = ViewBag.note, nameProduct = ViewBag.nameProduct, userName = ViewBag.userName, staffName = ViewBag.staffName, dateExport = ViewBag.dateExport, status = ViewBag.status, pageSize = ViewBag.pageSize }))
             </div>
         </div>
     </div>

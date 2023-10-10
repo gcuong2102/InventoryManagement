@@ -177,6 +177,13 @@
 
 
         }
+        function refreshParameter() {
+            const currentUrl = window.location.href;
+            // Tách URL để loại bỏ các tham số
+            const baseUrl = currentUrl.split("?")[0];
+            // Điều hướng đến URL mới
+            window.location.href = baseUrl;
+        }
     </script>
     <script>
         const preloaderWrapper = document.querySelector('.preloader-wrapper');

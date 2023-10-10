@@ -12,6 +12,7 @@
     {
         return new InventoryManagerment.DataAccess().GetUserByID(id).Name;
     }
+    TempData[InventoryManagerment.Common.CommonConstants.PAGE_NAME] = "Phiếu Giao Hàng";
 }
 <style>
 
@@ -251,29 +252,32 @@
     </div>
 </div>
 <div class="row">
-    <div class="col">
-        <h3>Phiếu Giao Hàng</h3>
-    </div>
-    <div class="col" style="text-align:right">
-        <button hidden id="btnCloseSelectMode" class="btn btn-icon btn-3 btn-success" type="button">
-            <span class="btn-inner--icon"><i class="material-icons">close</i></span>
-            <span class="btn-inner--text">Hủy</span>
+    <div class="col-12" style="text-align:right">
+        <button class="btn btn-icon btn-3 btn-primary" type="button" onclick="refreshParameter()">
+            <span class="btn-inner--icon"><i class="material-icons">refresh</i></span>
+            @*<span class="btn-inner--text">Làm mới</span>*@
         </button>
-        <button hidden id="btnDeleteMultiple" class="btn btn-icon btn-3 btn-danger" type="button">
-            <span class="btn-inner--icon"><i class="material-icons">done</i></span>
-            <span class="btn-inner--text">Đồng ý</span>
+        <button class="btn btn-icon btn-3 btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+            <span class="btn-inner--icon"><i class="material-icons">search</i></span>
+            @*<span class="btn-inner--text">Tìm kiếm</span>*@
         </button>
         <div class="btn-group dropdown">
             <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="material-icons">construction</i> Công cụ
+                <i class="material-icons">construction</i> @*Công cụ*@
             </button>
             <ul class="dropdown-menu px-2 py-3" aria-labelledby="dropdownMenuButton">
                 <li><a id="selectDelete" class="dropdown-item border-radius-md" href="javascript:;">Xóa</a></li>
             </ul>
         </div>
-        <button class="btn btn-icon btn-3 btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
-            <span class="btn-inner--icon"><i class="material-icons">search</i></span>
-            <span class="btn-inner--text">Tìm kiếm</span>
+    </div>
+    <div class="col-12" style="text-align: right">
+        <button hidden id="btnCloseSelectMode" class="btn btn-icon btn-3 btn-success" type="button">
+            <span class="btn-inner--icon"><i class="material-icons">close</i></span>
+            @*<span class="btn-inner--text">Hủy</span>*@
+        </button>
+        <button hidden id="btnDeleteMultiple" class="btn btn-icon btn-3 btn-danger" type="button">
+            <span class="btn-inner--icon"><i class="material-icons">done</i></span>
+            @*<span class="btn-inner--text">Đồng ý</span>*@
         </button>
     </div>
 </div>
@@ -636,6 +640,7 @@
                                             listSelected.each(function (i, val) {
                                                 $("#" + $(val).data('code')).remove();
                                             })
+                                            isSelecting = false
                                         }
                                         else {
                                             $(result.Message);

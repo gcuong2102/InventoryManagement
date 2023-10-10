@@ -45,6 +45,7 @@
                         <h6 class="mb-0 text-white text-capitalize ps-3">Danh sách Sổ xuất</h6>
                     </div>
                     <div class="col-6 text-end">
+                        <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" onclick="refreshParameter()"><i class="material-icons">refresh</i></a>
                         <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="material-icons">search</i></a>
                     </div>
                 </div>
@@ -145,12 +146,14 @@
                             }
                         </tbody>
                     </table>
-                    <div style="text-align:center">
-                        <div style="display:inline-block" id="listPaginationProduct">
-                            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, noteGhiChu = ViewBag.noteGhiChu, dateNote = ViewBag.dateNote, status = ViewBag.status, pageSize = ViewBag.pageSize }))
-                        </div>
-                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="overflow-auto" style="text-align:center">
+            <div style="display:inline-block" id="listPaginationProduct">
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.searchString, noteGhiChu = ViewBag.noteGhiChu, dateNote = ViewBag.dateNote, status = ViewBag.status, pageSize = ViewBag.pageSize }))
             </div>
         </div>
     </div>

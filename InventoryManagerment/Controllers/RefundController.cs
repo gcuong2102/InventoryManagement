@@ -39,7 +39,7 @@ namespace InventoryManagerment.Controllers
             {
                 ViewBag.dateRefund = dateRefund.Value.ToString("yyyy-MM-dd");
             }
-            var model = new DataAccess().ListAllRefundOnPagedlist(searchString,note,nameProduct,nameStaff,stt,dateRefund, page, pageSize);
+            var model = new DataAccess().ListAllRefundOnPagedlistOptimized(searchString,note,nameProduct,nameStaff,stt,dateRefund, page, pageSize);
             if (user.RoleID == 1)
             {
                 return View(model);

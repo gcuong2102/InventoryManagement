@@ -47,7 +47,7 @@ namespace InventoryManagerment.Controllers
                 ViewBag.dateExport = dateExport.Value.ToString("yyyy-MM-dd");
             }
             ViewBag.pageSize = pageSize;
-            var model = await new DataAccess().ListAllExportOnPagedlistAsync(searchString,note,nameProduct, staffName, userName, dateExport,stt, page, pageSize);
+            var model = await new DataAccess().ListAllExportOnPagedListAsync(searchString, note, nameProduct, staffName, userName, dateExport, stt, page, pageSize);
             return View(model);
         }
         [HttpGet]
@@ -127,7 +127,7 @@ namespace InventoryManagerment.Controllers
         [HttpGet]
         public JsonResult SetAutoComplete()
         {
-            var result = new DataAccess().GetListDataExport();
+            var result = new DataAccess().GetListDataExportAsync();
             return Json(result, JsonRequestBehavior.AllowGet);
         }
         [HttpGet]

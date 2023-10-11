@@ -295,59 +295,61 @@ namespace InventoryManagerment
                 return false;
             }
         }
-        public ImportDataViewModel GetListDataImport()
+        public async Task<ImportDataViewModel> GetListDataImport()
         {
+            var productsTask = db.Products.ToListAsync();
+            var categoriesTask = db.ProductCategories.ToDictionaryAsync(c => c.ID, c => c.Name);
+            var packagesTask = db.Packages.ToDictionaryAsync(p => p.ID, p => p.Name);
+            var suppliersTask = db.Suppliers.ToListAsync();
+            var nameSupplierTask = db.Suppliers.Select(x => x.Name).ToListAsync();
+
+            await Task.WhenAll(productsTask, categoriesTask, packagesTask, suppliersTask, nameSupplierTask);
+
+            var products = productsTask.Result;
+            var categories = categoriesTask.Result;
+            var packages = packagesTask.Result;
+            var suppliers = suppliersTask.Result;
+            var nameSupplier = nameSupplierTask.Result;
+
             var nameProduct = new List<string>();
             var dataProduct = new List<DataProduct>();
-            foreach(var item in db.Products.ToList())
+            foreach (var item in products)
             {
-                var categoryName = db.ProductCategories.Find(item.CategoryID).Name;
-                var name = item.Name;
-                var packageName = db.Packages.Find(item.PackageID).Name;
-                nameProduct.Add($"{categoryName} | {name} | {packageName}");
-                var newDataProduct = new DataProduct()
-                {
-                    Code = item.Code,
-                    FullName = $"{categoryName} | {name} | {packageName}",
-                };
-                dataProduct.Add(newDataProduct);
+                var categoryName = categories[item.CategoryID];
+                var packageName = packages[item.PackageID];
+                var fullName = categoryName + " | " + item.Name + " | " + packageName;
+                nameProduct.Add(fullName);
+                dataProduct.Add(new DataProduct { Code = item.Code, FullName = fullName });
             }
-            var result = new ImportDataViewModel()
-            {
-                ListProducts = db.Products.ToList(),
-                ListSupplier = db.Suppliers.ToList(),
-                NameProduct = nameProduct,
-                NameCodeProduct = dataProduct,
-                NameSupplier = db.Suppliers.Select(x => x.Name).ToList()
-            };
-            return result;
+            return new ImportDataViewModel { ListProducts = products, ListSupplier = suppliers, NameProduct = nameProduct, NameCodeProduct = dataProduct, NameSupplier = nameSupplier };
         }
-        public ExportDataViewModel GetListDataExport()
+        public async Task<ExportDataViewModel> GetListDataExportAsync()
         {
+            var productsTask = db.Products.ToListAsync();
+            var categoriesTask = db.ProductCategories.ToDictionaryAsync(c => c.ID, c => c.Name);
+            var packagesTask = db.Packages.ToDictionaryAsync(p => p.ID, p => p.Name);
+            var customersTask = db.Customers.ToListAsync();
+            var nameCustomerTask = new BANHANGCONTEXT().NOTEs.Select(x => x.CUSTOMER).Distinct().ToListAsync();
+
+            await Task.WhenAll(productsTask, categoriesTask, packagesTask, customersTask, nameCustomerTask);
+
+            var products = productsTask.Result;
+            var categories = categoriesTask.Result;
+            var packages = packagesTask.Result;
+            var customers = customersTask.Result;
+            var nameCustomer = nameCustomerTask.Result;
+
             var nameProduct = new List<string>();
             var dataProduct = new List<DataProduct>();
-            foreach(var item in db.Products.ToList())
+            foreach (var item in products)
             {
-                var categoryName = db.ProductCategories.Find(item.CategoryID).Name;
-                var name = item.Name;
-                var packageName = db.Packages.Find(item.PackageID).Name;
-                nameProduct.Add($"{categoryName} | {name} | {packageName}");
-                var newDataProduct = new DataProduct()
-                {
-                    Code = item.Code,
-                    FullName = $"{categoryName} | {name} | {packageName}",
-                };
-                dataProduct.Add(newDataProduct);
+                var categoryName = categories[item.CategoryID];
+                var packageName = packages[item.PackageID];
+                var fullName = categoryName + " | " + item.Name + " | " + packageName;
+                nameProduct.Add(fullName);
+                dataProduct.Add(new DataProduct { Code = item.Code, FullName = fullName });
             }
-            var result = new ExportDataViewModel()
-            {
-                ListProducts = db.Products.ToList(),
-                ListCustomers = db.Customers.ToList(),
-                NameProduct = nameProduct,
-                NameCodeProduct = dataProduct,
-                NameCustomer = new BANHANGCONTEXT().NOTEs.Select(x => x.CUSTOMER).Distinct().ToList(),
-            };
-            return result;
+            return new ExportDataViewModel { ListProducts = products, ListCustomers = customers, NameProduct = nameProduct, NameCodeProduct = dataProduct, NameCustomer = nameCustomer };
         }
         public bool InsertUser(User model, string userName)
         {
@@ -382,7 +384,7 @@ namespace InventoryManagerment
             }
             if (typeProduct != 0)
             {
-                model = model.Where(x => x.CategoryID.Value == typeProduct);
+                model = model.Where(x => x.CategoryID == typeProduct);
             }
 
             if (quantity == 1)
@@ -1086,7 +1088,7 @@ namespace InventoryManagerment
                         join supply in db.ImportDetails on import.Code equals supply.ImportCode
                         join product in db.Products on supply.ProductCode equals product.Code
                         join user in db.Users on import.UserID equals user.ID
-                        where import.ImportDelete == status
+                        where import.Status == status
                         && import.Note.Contains(note)
                         && user.Name.Contains(nameUser)
                         && product.Name.Contains(productName)
@@ -1378,21 +1380,17 @@ namespace InventoryManagerment
         }
         //---------------------------------------------------------------------------------------------------------------------------------
         //Chức năng phiếu xuất
-        public async Task<IPagedList<ExportViewModel>> ListAllExportOnPagedlistAsync(string searchString, string note, string nameProduct, string staffName, string userName, DateTime? dateExport, bool? statusExoport, int page, int pageSize)
+        public async Task<IPagedList<ExportViewModel>> ListAllExportOnPagedListAsync(string searchString, string note, string nameProduct, string staffName, string userName, DateTime? dateExport, bool? statusExoport, int page, int pageSize)
         {
             // Initialize and trim search parameters
-            searchString = searchString?.Trim() ?? "";
-            note = note?.Trim() ?? "";
             nameProduct = nameProduct?.Trim() ?? "";
-            staffName = staffName?.Trim() ?? "";
-            userName = userName?.Trim() ?? "";
-
             // Base query with projection
             IQueryable<ExportViewModel> query = from export in db.Exports
                                                 join customer in db.Customers on export.CustomerCode equals customer.CustomerCode
                                                 join supply in db.ExportDetails on export.Code equals supply.ExportCode
                                                 join product in db.Products on supply.ProductCode equals product.Code
                                                 join users in db.Users on export.UserID equals users.ID
+                                                where (string.IsNullOrEmpty(nameProduct) || product.Name.Contains(nameProduct))
                                                 select new ExportViewModel()
                                                 {
                                                     Code = export.Code,
@@ -1400,25 +1398,26 @@ namespace InventoryManagerment
                                                     Time = export.Time,
                                                     Status = export.Status,
                                                     NameUser = users.Name,
-                                                    Note = export.Note,                                                
+                                                    Note = export.Note,
                                                 };
-
             // Apply filters
-            if (statusExoport.HasValue)
-            {
-                query = query.Where(x => x.Status == statusExoport.Value);
-            }
             if (dateExport.HasValue)
             {
                 query = query.Where(x => x.Time.Year == dateExport.Value.Year && x.Time.Month == dateExport.Value.Month && x.Time.Day == dateExport.Value.Day);
             }
-            query = query.Where(x => x.CustomerName.Contains(searchString) && x.Note.Contains(note));
-
-            // Distinct and sort
-            query = query.Distinct().OrderByDescending(x => x.Time);
-
-            // Execute query and return paged list
-            return query.OrderByDescending(x => x.Time).ToPagedList(page, pageSize);
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(x => x.CustomerName.Contains(searchString));
+            }
+            if (!string.IsNullOrEmpty(note))
+            {
+                query = query.Where(x => x.Note.Contains(note));
+            }
+            if (!string.IsNullOrEmpty(staffName))
+            {
+                query = query.Where(x => x.NameUser.Contains(note));
+            }
+            return query.Distinct().OrderByDescending(x => x.Time).ToPagedList(page, pageSize);
         }
         public ExportForm GetExportForm(long id)
         {

@@ -24,10 +24,10 @@
         [DisplayName("Số Lượng Tối Thiểu")]
         public long? QuantityAlert { get; set; }
         [DisplayName("Loại Sản Phẩm")]
-        public long? CategoryID { get; set; }
+        public long CategoryID { get; set; }
         public long? ProductID { get; set; }
         [DisplayName("Cách Thức Đóng Gói")]
-        public long? PackageID { get; set; }
+        public long PackageID { get; set; }
         public double Quantity { get; set; }
         [DisplayName("Hàng Đặt")]
         public bool IsOrder { get; set; }

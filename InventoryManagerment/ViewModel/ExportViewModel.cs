@@ -14,6 +14,6 @@ namespace InventoryManagerment.ViewModel
         public string NameUser { get; set; }
         public string Note { get; set; }
         public bool ExportDelete { get; set; }
-        public string ProductCode { get; set; }
+        public string ProductName { get; set; }
     }
 }

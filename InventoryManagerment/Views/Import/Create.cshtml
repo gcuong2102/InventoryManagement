@@ -58,7 +58,7 @@
                 </select>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="max-width: fit-content;">
             <input type="button" id="btnAddProduct" class="btn btn-primary" value="Thêm sản phẩm" />
         </div>
     </div>
@@ -83,7 +83,7 @@
             </div>
         </div>
     </div>
-    <div class="row col-sm-2">
+    <div class="row col-sm-2" style="max-width: fit-content;">
         <input type="button" id="btnSave" name="SaveData" value="Lưu Phiếu nhập" class="btn btn-success" />
     </div>
 }
@@ -118,7 +118,7 @@ else
                 </select>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="max-width: fit-content;">
             <input type="button" id="btnAddProduct" class="btn btn-primary" value="Thêm sản phẩm" />
         </div>
     </div>
@@ -141,7 +141,7 @@ else
             </div>
         </div>
     </div>
-    <div class="row col-sm-2">
+    <div class="row col-sm-2" style="max-width: fit-content;">
         <input type="button" id="btnSave" name="SaveData" value="Lưu Phiếu nhập" class="btn btn-success" />
     </div>
 }
@@ -487,11 +487,11 @@ else
             nameSupplier = [];
             nameProducts = [];
             $.get("/Import/SetAutoComplete/", "", function (data) {
-                dataProduct.push(...data.ListProducts)
-                dataSupplier.push(...data.ListSupplier);
-                nameCodeProduct.push(...data.NameCodeProduct);
-                nameProducts.push(...data.NameProduct);
-                nameSupplier.push(...data.NameSupplier);
+                dataProduct.push(...data.Result.ListProducts)
+                dataSupplier.push(...data.Result.ListSupplier);
+                nameCodeProduct.push(...data.Result.NameCodeProduct);
+                nameProducts.push(...data.Result.NameProduct);
+                nameSupplier.push(...data.Result.NameSupplier);
 
                 AutoCompleteForInput(nameProducts, $('#txtProductName'));
                 AutoCompleteForInput(nameSupplier, $('#txtSupplier'));

@@ -79,7 +79,7 @@
                 </select>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="max-width: fit-content;">
             <input type="button" id="btnAddProduct" class="btn btn-primary" value="Thêm sản phẩm" />
         </div>
     </div>
@@ -104,7 +104,7 @@
             </div>
         </div>
     </div>
-    <div class="row col-sm-2">
+    <div class="row col-sm-2" style="max-width: fit-content;">
         <input type="button" id="btnSave" name="SaveData" value="Lưu Phiếu Xuất" class="btn btn-success" />
     </div>
 }
@@ -169,7 +169,7 @@ else
                 </select>
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2" style="max-width: fit-content;">
             <input type="button" id="btnAddProduct" class="btn btn-primary" value="Thêm sản phẩm" />
         </div>
     </div>
@@ -192,7 +192,7 @@ else
             </div>
         </div>
     </div>
-    <div class="row col-sm-2">
+    <div class="row col-sm-2" style="max-width: fit-content;">
         <input type="button" id="btnSave" name="SaveData" value="Lưu Phiếu Xuất" class="btn btn-success" />
     </div>
 }
@@ -271,12 +271,11 @@ else
             dataCustomer = [];
             nameProducts = [];
             $.get("/Export/SetAutoComplete/", "", function (data) {
-                dataProduct.push(...data.ListProducts)
-                dataCustomer.push(...data.ListCustomers)
-                nameCodeProduct.push(...data.NameCodeProduct)
-                nameProducts.push(...data.NameProduct)
-                nameCustomers.push(...data.NameCustomer)
-
+                dataProduct.push(...data.Result.ListProducts)
+                dataCustomer.push(...data.Result.ListCustomers)
+                nameCodeProduct.push(...data.Result.NameCodeProduct)
+                nameProducts.push(...data.Result.NameProduct)
+                nameCustomers.push(...data.Result.NameCustomer)
                 AutoCompleteForInput(nameProducts, $('#txtProductName'));
                 AutoCompleteForInput(nameCustomers, $('#txtCustomerName'));
                 hideSpinner();

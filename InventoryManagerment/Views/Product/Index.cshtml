@@ -69,7 +69,7 @@
                         <h6 class="mb-0 text-white text-capitalize ps-3">Danh sách sản phẩm</h6>
                     </div>
                     <div class="col-6 text-end">
-                        <a onclick="refreshParameter()" class="btn bg-gradient-dark mb-0 text-white text-capitalize"><i class="material-icons">search</i></a>
+                        <a onclick="refreshParameter()" class="btn bg-gradient-dark mb-0 text-white text-capitalize"><i class="material-icons">refresh</i></a>
                         <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="material-icons">search</i></a>
                         <a class="btn bg-gradient-dark mb-0 text-white text-capitalize" href="../Product/Create"><i class="material-icons text-sm">add</i></a>
                     </div>
@@ -144,10 +144,7 @@
                                         <div class="d-flex px-2 py-1">
                                             <div class="d-flex flex-column justify-content-center">
                                                 <h6 class="mb-0 text-sm">@item.Name</h6>
-                                                @if (item.CategoryID.HasValue)
-                                                {
-                                                    <p class="text-xs text-secondary mb-0">@GetCategoryName(item.CategoryID)</p>
-                                                }
+                                                <p class="text-xs text-secondary mb-0">@GetCategoryName(item.CategoryID)</p>
                                             </div>
                                         </div>
                                     </td>
